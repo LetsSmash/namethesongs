@@ -1,14 +1,11 @@
 'use client'
 
-// Updated Form.tsx with Yup validation
-import React, {useEffect, useState} from "react";
+import React, { useState } from "react";
 import { useFormik } from "formik";
-import * as Yup from 'yup'; // Import Yup for validation
+import * as Yup from 'yup';
 import FormBackground from "@/app/components/FormBackground";
 import MainGame from "@/app/components/MainGame";
 import FormInput from "@/app/components/FormInput";
-import {debounce} from "next/dist/server/utils";
-import axios from "axios";
 
 const validationSchema = Yup.object({
     album: Yup.string()

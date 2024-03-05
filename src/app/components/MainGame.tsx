@@ -1,17 +1,38 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
+import Countdown from 'react-countdown'
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
     const [releaseMBID, setReleaseMBID] = useState("");
-    const [songs, setSongs] = useState({ position: 0, title: "" });
+    const [songs, setSongs] = useState<Song[]>([]);
+    const [currentGuess, setCurrentGuess] = useState("")
+    const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
+
+    interface Song {
+        title: string,
+        position: number
+    }
+
+    const gameEnd = () => {
+
+    }
+
+    // @ts-ignore
+    const renderer = ({minutes, seconds, completed}) => {
+        if (completed){
+            return gameEnd()
+        } else {
+            return <span>{minutes}:{seconds}</span>
+        }
+    }
 
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
             params: {
-                query: `release-group:"${props.album}"`,
+                query: `${props.album}`,
                 fmt: 'json',
                 inc: 'releases',
             },
@@ -75,6 +96,19 @@ const MainGame = (props: { album: string }) => {
         }))
         setSongs(fetchedSongs)
     }
+    const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const guess = e.target.value;
+        setCurrentGuess(guess);
+
+        // Perform the case-insensitive comparison here to determine if the guess is correct.
+        // This is a simplistic check; you might have a more complex logic to determine if a guess is correct.
+        const correctGuess = songs.find(song => song.title.toLowerCase() === guess.toLowerCase());
+        if (correctGuess && !correctGuesses.includes(correctGuess.title)) {
+            setCorrectGuesses([...correctGuesses, correctGuess.title]);
+            setCurrentGuess('')
+        }
+    };
+
 
     // Trigger fetching the release group when the album prop changes
     useEffect(() => {
@@ -101,7 +135,20 @@ const MainGame = (props: { album: string }) => {
                 id="song"
                 name="song"
                 type="text"
+                value={currentGuess}
+                onChange={inputChange}
             />
+            <div>
+                {songs.length > 0 && (
+                    <ul className="mt-6">
+                        {songs.map((song: Song, index) => (
+                            <li key={index} className="mt-3">
+                                {song.position}. {correctGuesses.includes(song.title) && <span>{song.title}</span>}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </FormBackground>
     );
 };
