@@ -3,7 +3,6 @@ import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown from 'react-countdown'
-import {Console} from "inspector";
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -11,7 +10,7 @@ const MainGame = (props: { album: string }) => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [currentGuess, setCurrentGuess] = useState("")
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
-    const [endTime, setEndTime] = useState(Date.now() + 5 * 60000)
+    const [endTime] = useState(Date.now() + 5 * 60000)
     const [hasEnded, setHasEnded] = useState(false)
 
     interface Song {
@@ -31,7 +30,7 @@ const MainGame = (props: { album: string }) => {
             }
         });
         if (data['release-groups'] && data['release-groups'].length > 0) {
-            const releaseGroup = data['release-groups'][0]; // Assuming the first result is the desired one
+            const releaseGroup = data['release-groups'][0];
             setReleaseGroupMBID(releaseGroup.id);
         }
         console.log(data)
@@ -66,7 +65,6 @@ const MainGame = (props: { album: string }) => {
 
             setReleaseMBID(selectedRelease.id);
         }
-        console.log(data)
     };
 
     const fetchTracklist = async () => {
@@ -85,23 +83,23 @@ const MainGame = (props: { album: string }) => {
             title: track.title
         }))
         setSongs(fetchedSongs)
+        console.log(fetchedSongs)
     }
 
     const normalizeString = (str: string) => {
         return str
             .replace(/’/g, "'") // Replace curly apostrophes with straight ones
-            // Add more replacements as needed
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Optional: Remove diacritics
-            .toLowerCase(); // Convert to lowercase to make comparison case-insensitive
+            .replace(/Ä/g, 'A').replace(/ä/g, 'a')
+            .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+            .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+            .toLowerCase();
     };
 
     const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const guess = e.target.value;
         setCurrentGuess(guess);
 
-        // Perform the case-insensitive comparison here to determine if the guess is correct.
-        // This is a simplistic check; you might have a more complex logic to determine if a guess is correct.
-        const correctGuess = songs.find(song => normalizeString(song.title) === guess.toLowerCase());
+        const correctGuess = songs.find(song => normalizeString(song.title) === normalizeString(guess));
         if (correctGuess && !correctGuesses.includes(correctGuess.title)) {
             setCorrectGuesses([...correctGuesses, correctGuess.title]);
             setCurrentGuess('')
@@ -132,35 +130,37 @@ const MainGame = (props: { album: string }) => {
 
     return (
         <FormBackground>
-            <div className="flex justify-between items-center w-full">
-                <label htmlFor="song" className="text-left">Enter a Song</label>
-                <Countdown
-                    date={endTime}
-                    renderer={props => (
-                        <p className="text-right">
-                            {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
-                            {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
-                        </p>
+            {!hasEnded && (
+                <>
+                    <div className="flex justify-between items-center w-full">
+                        <label htmlFor="song" className="text-left">Enter a Song</label>
+                        <Countdown
+                            date={endTime}
+                            renderer={props => (
+                                <p className="text-right">
+                                    {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                                    {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                                </p>
+                            )}
+                            onComplete={gameEnd}/>
+                    </div>
+
+                    <FormInput
+                        id="song"
+                        name="song"
+                        type="text"
+                        value={currentGuess}
+                        onChange={inputChange}/>
+
+                    <a onClick={gameEnd} className="hover:underline hover:cursor-pointer">Give Up</a>
+                </>
                     )}
-                    onComplete={gameEnd}
-                />
-            </div>
-            <FormInput
-                id="song"
-                name="song"
-                type="text"
-                value={currentGuess}
-                onChange={inputChange}
-            />
-            <div className="flex justify-between items-center w-full">
-                <a className="text-end">Give Up</a>
-            </div>
             <div>
                 {songs.length > 0 && (
-                    <ul className="mt-6">
+                    <ul className={(hasEnded ? '' : 'mt-6')}>
                         {songs.map((song: Song, index) => (
                             <li key={index} className="mt-3">
-                                {song.position}. {correctGuesses.includes(song.title) && !hasEnded && <span>{song.title}</span>} {hasEnded && <span>{song.title}</span>}
+                                {song.position}. {correctGuesses.includes(song.title) && !hasEnded && <span>{song.title}</span>} {hasEnded && <span className={(correctGuesses.includes(song.title) ? 'text-green-500' : 'text-red-600')}>{song.title}</span>}
                             </li>
                         ))}
                     </ul>
