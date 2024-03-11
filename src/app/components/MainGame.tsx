@@ -3,7 +3,6 @@ import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown from 'react-countdown'
-import utf8 from 'utf8'
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
