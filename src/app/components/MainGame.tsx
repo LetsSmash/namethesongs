@@ -3,6 +3,7 @@ import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown from 'react-countdown'
+import {Console} from "inspector";
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -10,7 +11,8 @@ const MainGame = (props: { album: string }) => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [currentGuess, setCurrentGuess] = useState("")
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
-    const [endTime, setEndTime] = useState(Date.now() + 10 * 60000)
+    const [endTime, setEndTime] = useState(Date.now() + 5 * 60000)
+    const [hasEnded, setHasEnded] = useState(false)
 
     interface Song {
         title: string,
@@ -106,6 +108,10 @@ const MainGame = (props: { album: string }) => {
         }
     };
 
+    const gameEnd = () => {
+        setHasEnded(true)
+    }
+
     // Trigger fetching the release group when the album prop changes
     useEffect(() => {
         fetchReleaseGroup();
@@ -136,6 +142,7 @@ const MainGame = (props: { album: string }) => {
                             {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
                         </p>
                     )}
+                    onComplete={gameEnd}
                 />
             </div>
             <FormInput
@@ -145,12 +152,15 @@ const MainGame = (props: { album: string }) => {
                 value={currentGuess}
                 onChange={inputChange}
             />
+            <div className="flex justify-between items-center w-full">
+                <a className="text-end">Give Up</a>
+            </div>
             <div>
                 {songs.length > 0 && (
                     <ul className="mt-6">
                         {songs.map((song: Song, index) => (
                             <li key={index} className="mt-3">
-                                {song.position}. {correctGuesses.includes(song.title) && <span>{song.title}</span>}
+                                {song.position}. {correctGuesses.includes(song.title) && !hasEnded && <span>{song.title}</span>} {hasEnded && <span>{song.title}</span>}
                             </li>
                         ))}
                     </ul>
