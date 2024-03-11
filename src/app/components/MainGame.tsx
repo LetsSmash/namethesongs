@@ -3,6 +3,7 @@ import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown from 'react-countdown'
+import utf8 from 'utf8'
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -10,23 +11,11 @@ const MainGame = (props: { album: string }) => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [currentGuess, setCurrentGuess] = useState("")
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
+    const [endTime, setEndTime] = useState(Date.now() + 10 * 60000)
 
     interface Song {
         title: string,
         position: number
-    }
-
-    const gameEnd = () => {
-
-    }
-
-    // @ts-ignore
-    const renderer = ({minutes, seconds, completed}) => {
-        if (completed){
-            return gameEnd()
-        } else {
-            return <span>{minutes}:{seconds}</span>
-        }
     }
 
     const fetchReleaseGroup = async () => {
@@ -96,19 +85,27 @@ const MainGame = (props: { album: string }) => {
         }))
         setSongs(fetchedSongs)
     }
+
+    const normalizeString = (str: string) => {
+        return str
+            .replace(/’/g, "'") // Replace curly apostrophes with straight ones
+            // Add more replacements as needed
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Optional: Remove diacritics
+            .toLowerCase(); // Convert to lowercase to make comparison case-insensitive
+    };
+
     const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const guess = e.target.value;
         setCurrentGuess(guess);
 
         // Perform the case-insensitive comparison here to determine if the guess is correct.
         // This is a simplistic check; you might have a more complex logic to determine if a guess is correct.
-        const correctGuess = songs.find(song => song.title.toLowerCase() === guess.toLowerCase());
+        const correctGuess = songs.find(song => normalizeString(song.title) === guess.toLowerCase());
         if (correctGuess && !correctGuesses.includes(correctGuess.title)) {
             setCorrectGuesses([...correctGuesses, correctGuess.title]);
             setCurrentGuess('')
         }
     };
-
 
     // Trigger fetching the release group when the album prop changes
     useEffect(() => {
@@ -130,7 +127,18 @@ const MainGame = (props: { album: string }) => {
 
     return (
         <FormBackground>
-            <label htmlFor="song">Enter a Song</label>
+            <div className="flex justify-between items-center w-full">
+                <label htmlFor="song" className="text-left">Enter a Song</label>
+                <Countdown
+                    date={endTime}
+                    renderer={props => (
+                        <p className="text-right">
+                            {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                            {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                        </p>
+                    )}
+                />
+            </div>
             <FormInput
                 id="song"
                 name="song"
