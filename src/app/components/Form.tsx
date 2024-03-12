@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import FormBackground from "@/app/components/FormBackground";
 import MainGame from "@/app/components/MainGame";
 import FormInput from "@/app/components/FormInput";
+import FormButton from "@/app/components/FormButton";
 
 const validationSchema = Yup.object({
     album: Yup.string()
@@ -48,12 +49,11 @@ const Form = () => {
                 {formik.touched.album && formik.errors.album ? (
                     <div className="text-red-500 text-xs">{formik.errors.album}</div>
                 ) : null}
-                <button
+                <FormButton
                     type="submit"
-                    className="flex justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full bg-sky-500 hover:bg-sky-600 focus-visible:outline-sky-600 my-5"
                 >
                     Go!
-                </button>
+                </FormButton>
             </form>
         </FormBackground>
     );

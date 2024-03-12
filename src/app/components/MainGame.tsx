@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
-import Countdown from 'react-countdown'
+import Countdown, { CountdownApi } from 'react-countdown'
+import FormButton from "@/app/components/FormButton";
+import Form from "@/app/components/Form";
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -12,6 +14,9 @@ const MainGame = (props: { album: string }) => {
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
     const [endTime] = useState(Date.now() + 5 * 60000)
     const [hasEnded, setHasEnded] = useState(false)
+    const [notFound, setNotFound] = useState(false)
+    const [loaded, setLoaded] = useState(false)
+    const [buttonState, setButtonState] = useState(false)
 
     interface Song {
         title: string,
@@ -21,7 +26,7 @@ const MainGame = (props: { album: string }) => {
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
             params: {
-                query: `${props.album}`,
+                query: `${props.album} AND type:album AND status:official`,
                 fmt: 'json',
                 inc: 'releases',
             },
@@ -29,9 +34,12 @@ const MainGame = (props: { album: string }) => {
                 "User-Agent": "GuessTheSongs/0.1"
             }
         });
+        setLoaded(true)
         if (data['release-groups'] && data['release-groups'].length > 0) {
             const releaseGroup = data['release-groups'][0];
             setReleaseGroupMBID(releaseGroup.id);
+        } else {
+            setNotFound(true)
         }
         console.log(data)
     };
@@ -110,10 +118,16 @@ const MainGame = (props: { album: string }) => {
         setHasEnded(true)
     }
 
+    const handleClick = () => {
+      setButtonState(true)
+    }
+
+    if (buttonState) return <Form />
+
     // Trigger fetching the release group when the album prop changes
     useEffect(() => {
         fetchReleaseGroup();
-    }, [props.album]);
+    }, []);
 
     // Fetch the tracklist once we have the release group MBID
     useEffect(() => {
@@ -128,9 +142,15 @@ const MainGame = (props: { album: string }) => {
         }
     }, [releaseMBID]);
 
+    useEffect(() => {
+        if (correctGuesses.length === songs.length && songs.length > 0) {
+            gameEnd();
+        }
+    }, [correctGuesses, songs]); // Depend on both correctGuesses and songs
+
     return (
         <FormBackground>
-            {!hasEnded && (
+            {!hasEnded && !notFound && loaded && (
                 <>
                     <div className="flex justify-between items-center w-full">
                         <label htmlFor="song" className="text-left">Enter a Song</label>
@@ -160,12 +180,25 @@ const MainGame = (props: { album: string }) => {
                     <ul className={(hasEnded ? '' : 'mt-6')}>
                         {songs.map((song: Song, index) => (
                             <li key={index} className="mt-3">
-                                {song.position}. {correctGuesses.includes(song.title) && !hasEnded && <span>{song.title}</span>} {hasEnded && <span className={(correctGuesses.includes(song.title) ? 'text-green-500' : 'text-red-600')}>{song.title}</span>}
+                                {song.position}. {correctGuesses.includes(song.title) && !hasEnded && <span>{song.title}</span>}
+                                {hasEnded && <span className={(correctGuesses.includes(song.title) ? 'text-green-500' : 'text-red-600')}>{song.title}</span>}
                             </li>
                         ))}
                     </ul>
                 )}
             </div>
+            {notFound && (
+                <div className="bg-red-200 text-black px-2 py-2">
+                    <p>You have made an invalid entry, or your Album wasn't found on MusicBrainz. Refresh the page to try again.</p>
+                </div>
+            )}
+            {hasEnded && (
+                <FormButton
+                    onClick={handleClick}
+                >
+                    Restart
+                </FormButton>
+            )}
         </FormBackground>
     );
 };
