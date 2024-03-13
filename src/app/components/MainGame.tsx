@@ -124,7 +124,6 @@ const MainGame = (props: { album: string }) => {
 
     if (buttonState) return <Form />
 
-    // Trigger fetching the release group when the album prop changes
     useEffect(() => {
         fetchReleaseGroup();
     }, []);
@@ -146,7 +145,7 @@ const MainGame = (props: { album: string }) => {
         if (correctGuesses.length === songs.length && songs.length > 0) {
             gameEnd();
         }
-    }, [correctGuesses, songs]); // Depend on both correctGuesses and songs
+    }, [correctGuesses, songs]);
 
     return (
         <FormBackground>
