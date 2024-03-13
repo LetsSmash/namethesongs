@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState } from "react";
+import React, {useCallback, useState} from "react";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
+import {useRouter, useSearchParams} from 'next/navigation'
+
 import FormBackground from "@/app/components/FormBackground";
-import MainGame from "@/app/components/MainGame";
 import FormInput from "@/app/components/FormInput";
 import FormButton from "@/app/components/FormButton";
 
@@ -16,6 +17,19 @@ const validationSchema = Yup.object({
 const Form = () => {
     const [submitted, setSubmitted] = useState(false);
     const [album, setAlbum] = useState("");
+
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const createQueryString = useCallback(
+        (name: string, value: string) => {
+            const params = new URLSearchParams(searchParams.toString())
+            params.set(name, value)
+
+            return params.toString()
+        },
+        [searchParams]
+    )
 
     const formik = useFormik({
         initialValues: {
@@ -29,7 +43,7 @@ const Form = () => {
         },
     });
 
-    if (submitted) return <MainGame album={album} />;
+    if (submitted) return router.push('/game?' + createQueryString('album', `${album}`));
 
     return (
         <FormBackground>

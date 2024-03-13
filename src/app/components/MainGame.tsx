@@ -16,7 +16,6 @@ const MainGame = (props: { album: string }) => {
     const [hasEnded, setHasEnded] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const [loaded, setLoaded] = useState(false)
-    const [buttonState, setButtonState] = useState(false)
 
     interface Song {
         title: string,
@@ -118,12 +117,6 @@ const MainGame = (props: { album: string }) => {
         setHasEnded(true)
     }
 
-    const handleClick = () => {
-      setButtonState(true)
-    }
-
-    if (buttonState) return <Form />
-
     useEffect(() => {
         fetchReleaseGroup();
     }, []);
@@ -192,9 +185,7 @@ const MainGame = (props: { album: string }) => {
                 </div>
             )}
             {hasEnded && (
-                <FormButton
-                    onClick={handleClick}
-                >
+                <FormButton>
                     Restart
                 </FormButton>
             )}
