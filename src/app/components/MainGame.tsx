@@ -1,10 +1,12 @@
+'use client'
+
 import React, { useState, useEffect } from "react";
-import FormBackground from "@/app/components/FormBackground";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
-import Countdown, { CountdownApi } from 'react-countdown'
+import Countdown from 'react-countdown'
 import FormButton from "@/app/components/FormButton";
-import Form from "@/app/components/Form";
+import {useRouter} from "next/navigation";
+import Link from "next/link";
 
 const MainGame = (props: { album: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -16,6 +18,8 @@ const MainGame = (props: { album: string }) => {
     const [hasEnded, setHasEnded] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const [loaded, setLoaded] = useState(false)
+
+    const router = useRouter()
 
     interface Song {
         title: string,
@@ -141,7 +145,7 @@ const MainGame = (props: { album: string }) => {
     }, [correctGuesses, songs]);
 
     return (
-        <FormBackground>
+            <>
             {!hasEnded && !notFound && loaded && (
                 <>
                     <div className="flex justify-between items-center w-full">
@@ -181,15 +185,15 @@ const MainGame = (props: { album: string }) => {
             </div>
             {notFound && (
                 <div className="bg-red-200 text-black px-2 py-2">
-                    <p>You have made an invalid entry, or your Album wasn't found on MusicBrainz. Refresh the page to try again.</p>
+                    <p>You have made an invalid entry, or your Album wasn't found on MusicBrainz. <Link href={"/"} className="underline">Back to the Form</Link>.</p>
                 </div>
             )}
             {hasEnded && (
-                <FormButton>
+                <FormButton onClick={() => router.push("/")}>
                     Restart
                 </FormButton>
             )}
-        </FormBackground>
+                </>
     );
 };
 
