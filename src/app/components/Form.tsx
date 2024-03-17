@@ -74,6 +74,12 @@ const Form = () => {
                     onBlur={formik.handleBlur}
                     value={formik.values.album}
                 />
+                {formik.touched.album && formik.errors.album ? (
+                    <div className="text-red-500 text-xs">{formik.errors.album}</div>
+                ) : null}
+                {formik.touched.artist && formik.errors.artist ? (
+                    <div className="text-red-500 text-xs">{formik.errors.artist}</div>
+                ) : null}
                 <FormButton
                     type="submit"
                 >
