@@ -8,7 +8,7 @@ import FormButton from "@/app/components/FormButton";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
 
-const MainGame = (props: { album: string }) => {
+const MainGame = (props: { album: string, artist: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
     const [releaseMBID, setReleaseMBID] = useState("");
     const [songs, setSongs] = useState<Song[]>([]);
@@ -29,7 +29,7 @@ const MainGame = (props: { album: string }) => {
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
             params: {
-                query: `${props.album} AND type:album AND status:official`,
+                query: `releasegroup:"${props.album}" AND artist:${props.artist} AND (primarytype:album OR primarytype:ep) AND status:official`,
                 fmt: 'json',
                 inc: 'releases',
             },

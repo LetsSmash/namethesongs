@@ -11,12 +11,15 @@ import FormButton from "@/app/components/FormButton";
 
 const validationSchema = Yup.object({
     album: Yup.string()
-        .required('Album name is required'),
+        .required('Album or EP name is required'),
+    artist: Yup.string()
+        .required('Artist name is required'),
 });
 
 const Form = () => {
     const [submitted, setSubmitted] = useState(false);
     const [album, setAlbum] = useState("");
+    const [artist, setArtist] = useState("")
 
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -25,7 +28,6 @@ const Form = () => {
         (name: string, value: string) => {
             const params = new URLSearchParams(searchParams.toString())
             params.set(name, value)
-
             return params.toString()
         },
         [searchParams]
@@ -34,16 +36,18 @@ const Form = () => {
     const formik = useFormik({
         initialValues: {
             album: "",
+            artist: "",
         },
-        validationSchema, // Use the validation schema in Formik
+        validationSchema,
         onSubmit: (values, { resetForm }) => {
             setAlbum(values.album);
+            setArtist(values.artist)
             setSubmitted(true);
             resetForm();
         },
     });
 
-    if (submitted) return router.push('/game?' + createQueryString('album', `${album}`));
+    if (submitted) return router.push('/game?' + createQueryString('album', `${album}`) + "&" + createQueryString('artist', `${artist}`));
 
     return (
         <FormBackground>
@@ -51,7 +55,17 @@ const Form = () => {
                 className="block text-sm font-medium leading-6 text-gray-900"
                 onSubmit={formik.handleSubmit}
             >
-                <label htmlFor="album">Enter an Album</label>
+                <label htmlFor={"artist"}>Enter an Artist</label>
+                <FormInput
+                    id="artist"
+                    name="artist"
+                    type="text"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.artist}
+                    classes="mb-4"
+                />
+                <label htmlFor="album">Enter an Album or an EP by that Artist</label>
                 <FormInput
                     id="album"
                     name="album"
@@ -60,9 +74,6 @@ const Form = () => {
                     onBlur={formik.handleBlur}
                     value={formik.values.album}
                 />
-                {formik.touched.album && formik.errors.album ? (
-                    <div className="text-red-500 text-xs">{formik.errors.album}</div>
-                ) : null}
                 <FormButton
                     type="submit"
                 >
