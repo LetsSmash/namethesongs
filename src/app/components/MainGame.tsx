@@ -149,6 +149,7 @@ const MainGame = (props: { album: string, artist: string }) => {
             <>
             {!hasEnded && !notFound && loaded && (
                 <>
+                    <p className="mb-4">Selected Album: {decodeURI(props.album)} by {decodeURI(props.artist)}</p>
                     <div className="flex justify-between items-center w-full">
                         <label htmlFor="song" className="text-left">Enter a Song</label>
                         <Countdown
@@ -186,7 +187,7 @@ const MainGame = (props: { album: string, artist: string }) => {
             </div>
             {notFound && (
                 <div className="bg-red-200 text-black px-2 py-2">
-                    <p>{"You have made an invalid entry, or your Album wasn't found on MusicBrainz."}<Link href={"/"} className="underline">Back to the Form</Link>.</p>
+                    <p>{"You have made an invalid entry, or your Page wasn't found on MusicBrainz."}<Link href={"/"} className="underline">Back to the Form</Link>.</p>
                 </div>
             )}
             {hasEnded && (

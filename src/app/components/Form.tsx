@@ -1,9 +1,9 @@
 'use client'
 
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
-import {useRouter, useSearchParams} from 'next/navigation'
+import {useRouter} from 'next/navigation'
 
 import FormBackground from "@/app/components/FormBackground";
 import FormInput from "@/app/components/FormInput";
@@ -11,7 +11,7 @@ import FormButton from "@/app/components/FormButton";
 
 const validationSchema = Yup.object({
     album: Yup.string()
-        .required('Album or EP name is required'),
+        .required('Page or EP name is required'),
     artist: Yup.string()
         .required('Artist name is required'),
 });
@@ -39,13 +39,7 @@ const Form = () => {
 
     useEffect(() => {
         if (submitted) {
-            // Construct query string
-            const queryString = new URLSearchParams({
-                album: album,
-                artist: artist,
-            }).toString();
-            // Redirect
-            router.push(`/game?${queryString}`);
+            router.push(`/game/${artist}/${album}`);
         }
     }, [submitted, album, artist, router]);
 
