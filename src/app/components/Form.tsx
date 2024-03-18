@@ -47,7 +47,7 @@ const Form = () => {
             // Redirect
             router.push(`/game?${queryString}`);
         }
-    }, [submitted, formik.values.album, formik.values.artist, router]);
+    }, [submitted, album, artist, router]);
 
     return (
         <FormBackground>
