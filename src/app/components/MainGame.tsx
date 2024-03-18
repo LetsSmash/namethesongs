@@ -7,6 +7,7 @@ import Countdown from 'react-countdown'
 import FormButton from "@/app/components/FormButton";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
+import {Track} from "@/types";
 
 const MainGame = (props: { album: string, artist: string }) => {
     const [releaseGroupMBID, setReleaseGroupMBID] = useState("");
@@ -88,7 +89,7 @@ const MainGame = (props: { album: string, artist: string }) => {
                 "User-Agent": "GuessTheSongs/0.1"
             }
         });
-        const tracklist = data.media[0].tracks
+        const tracklist: Track[] = data.media[0].tracks
         const fetchedSongs = tracklist.map((track: { position: number; title: string; }) => ({
             position: track.position,
             title: track.title
@@ -123,20 +124,20 @@ const MainGame = (props: { album: string, artist: string }) => {
 
     useEffect(() => {
         fetchReleaseGroup();
-    }, []);
+    }, [fetchReleaseGroup()]);
 
     // Fetch the tracklist once we have the release group MBID
     useEffect(() => {
         if (releaseGroupMBID) {
             fetchRelease();
         }
-    }, [releaseGroupMBID]);
+    }, [releaseGroupMBID, fetchRelease()]);
 
     useEffect(() => {
         if (releaseMBID){
             fetchTracklist()
         }
-    }, [releaseMBID]);
+    }, [releaseMBID, fetchTracklist()]);
 
     useEffect(() => {
         if (correctGuesses.length === songs.length && songs.length > 0) {
@@ -185,7 +186,7 @@ const MainGame = (props: { album: string, artist: string }) => {
             </div>
             {notFound && (
                 <div className="bg-red-200 text-black px-2 py-2">
-                    <p>You have made an invalid entry, or your Album wasn't found on MusicBrainz. <Link href={"/"} className="underline">Back to the Form</Link>.</p>
+                    <p>{"You have made an invalid entry, or your Album wasn't found on MusicBrainz."}<Link href={"/"} className="underline">Back to the Form</Link>.</p>
                 </div>
             )}
             {hasEnded && (
