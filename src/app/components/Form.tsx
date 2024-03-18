@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useCallback, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
 import {useRouter, useSearchParams} from 'next/navigation'
@@ -18,20 +18,8 @@ const validationSchema = Yup.object({
 
 const Form = () => {
     const [submitted, setSubmitted] = useState(false);
-    const [album, setAlbum] = useState("");
-    const [artist, setArtist] = useState("")
 
     const router = useRouter()
-    const searchParams = useSearchParams()
-
-    const createQueryString = useCallback(
-        (name: string, value: string) => {
-            const params = new URLSearchParams(searchParams.toString())
-            params.set(name, value)
-            return params.toString()
-        },
-        [searchParams]
-    )
 
     const formik = useFormik({
         initialValues: {
@@ -40,14 +28,22 @@ const Form = () => {
         },
         validationSchema,
         onSubmit: (values, { resetForm }) => {
-            setAlbum(values.album);
-            setArtist(values.artist)
             setSubmitted(true);
             resetForm();
         },
     });
 
-    if (submitted) return router.push('/game?' + createQueryString('album', `${album}`) + "&" + createQueryString('artist', `${artist}`));
+    useEffect(() => {
+        if (submitted) {
+            // Construct query string
+            const queryString = new URLSearchParams({
+                album: formik.values.album,
+                artist: formik.values.artist,
+            }).toString();
+            // Redirect
+            router.push(`/game?${queryString}`);
+        }
+    }, [submitted, formik.values.album, formik.values.artist, router]);
 
     return (
         <FormBackground>
