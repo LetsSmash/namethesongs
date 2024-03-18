@@ -124,20 +124,20 @@ const MainGame = (props: { album: string, artist: string }) => {
 
     useEffect(() => {
         fetchReleaseGroup();
-    }, [fetchReleaseGroup()]);
+    }, []);
 
     // Fetch the tracklist once we have the release group MBID
     useEffect(() => {
         if (releaseGroupMBID) {
             fetchRelease();
         }
-    }, [releaseGroupMBID, fetchRelease()]);
+    }, [releaseGroupMBID]);
 
     useEffect(() => {
         if (releaseMBID){
             fetchTracklist()
         }
-    }, [releaseMBID, fetchTracklist()]);
+    }, [releaseMBID]);
 
     useEffect(() => {
         if (correctGuesses.length === songs.length && songs.length > 0) {

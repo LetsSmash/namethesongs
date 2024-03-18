@@ -18,6 +18,8 @@ const validationSchema = Yup.object({
 
 const Form = () => {
     const [submitted, setSubmitted] = useState(false);
+    const [artist, setArtist] = useState("")
+    const [album, setAlbum] = useState("")
 
     const router = useRouter()
 
@@ -28,6 +30,8 @@ const Form = () => {
         },
         validationSchema,
         onSubmit: (values, { resetForm }) => {
+            setArtist(values.artist)
+            setAlbum(values.album)
             setSubmitted(true);
             resetForm();
         },
@@ -37,8 +41,8 @@ const Form = () => {
         if (submitted) {
             // Construct query string
             const queryString = new URLSearchParams({
-                album: formik.values.album,
-                artist: formik.values.artist,
+                album: album,
+                artist: artist,
             }).toString();
             // Redirect
             router.push(`/game?${queryString}`);
