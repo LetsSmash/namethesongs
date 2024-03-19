@@ -147,6 +147,9 @@ const MainGame = (props: { album: string, artist: string }) => {
 
     return (
             <>
+                {hasEnded && (
+                    <p>{correctGuesses.length} / {songs.length}</p>
+                )}
             {!hasEnded && !notFound && loaded && (
                 <>
                     <p className="mb-4">Selected Album: {decodeURI(props.album)} by {decodeURI(props.artist)}</p>
