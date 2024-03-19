@@ -12,7 +12,7 @@ export function generateMetadata({params}: {params: Params}){
     return {
         openGraph: {
             title: `Name the Songs: ${slug[1]} by ${slug[0]}`,
-            description: `Can you name the Songs on the Album "${slug[1]}" by ${slug[0]}? Find out by yourself}`
+            description: `Can you name the Songs on the Album "${decodeURI(slug[1])}" by ${decodeURI(slug[0])}? Find out by yourself`
         }
     }
 }
