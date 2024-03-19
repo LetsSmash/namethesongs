@@ -29,11 +29,11 @@ export interface Medum {
 
 export interface Track {
     title: string
-    recording: Recording
-    number: string
+    recording?: Recording
+    number?: string
     position: number
-    id: string
-    length: number
+    id?: string
+    length?: number
 }
 
 export interface Recording {
