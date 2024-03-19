@@ -30,7 +30,7 @@ const MainGame = (props: { album: string, artist: string }) => {
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
             params: {
-                query: `releasegroup:"${props.album}" AND artist:${props.artist} AND (primarytype:album OR primarytype:ep) AND status:official`,
+                query: `releasegroup:"${decodeURI(props.album)}" AND artist:${props.artist} AND (primarytype:album OR primarytype:ep) AND status:official`,
                 fmt: 'json',
                 inc: 'releases',
             },

@@ -45,6 +45,8 @@ const Form = () => {
 
     return (
         <FormBackground>
+            {!submitted && (
+            <>
             <form
                 className="block text-sm font-medium leading-6 text-gray-900"
                 onSubmit={formik.handleSubmit}
@@ -80,6 +82,11 @@ const Form = () => {
                     Go!
                 </FormButton>
             </form>
+                </>
+                )}
+            {submitted && (
+                <p>Loading...</p>
+                )}
         </FormBackground>
     );
 };
