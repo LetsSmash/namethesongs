@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from "react";
+import React, {useState, useEffect, useRef} from "react";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
-import Countdown from 'react-countdown'
+import Countdown, {CountdownApi} from 'react-countdown'
 import FormButton from "@/app/components/FormButton";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
@@ -20,11 +20,14 @@ const MainGame = (props: { album: string, artist: string }) =>{
     const [currentGuess, setCurrentGuess] = useState("")
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
     const [endTime] = useState(Date.now() + 5 * 60000)
+    const [remainingTime, setRemainingTime] = useState(0)
     const [hasEnded, setHasEnded] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const [loaded, setLoaded] = useState(false)
 
     const router = useRouter()
+
+    const countdownRef = useRef<CountdownApi>(null)
 
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
@@ -126,6 +129,13 @@ const MainGame = (props: { album: string, artist: string }) =>{
         setHasEnded(true)
     }
 
+    const stopCountdown = () => {
+        if (countdownRef.current){
+            countdownRef.current.stop();
+        }
+        setHasEnded(true)
+    }
+
     useEffect(() => {
         fetchReleaseGroup();
     }, []);
@@ -177,7 +187,7 @@ const MainGame = (props: { album: string, artist: string }) =>{
                         value={currentGuess}
                         onChange={inputChange}/>
 
-                    <a onClick={gameEnd} className="hover:underline hover:cursor-pointer">Give Up</a>
+                    <a onClick={stopCountdown} className="hover:underline hover:cursor-pointer">Give Up</a>
                 </>
                     )}
             <div>
