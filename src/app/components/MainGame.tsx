@@ -20,14 +20,14 @@ const MainGame = (props: { album: string, artist: string }) =>{
     const [currentGuess, setCurrentGuess] = useState("")
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
     const [endTime] = useState(Date.now() + 5 * 60000)
-    const [remainingTime, setRemainingTime] = useState(0)
+    const [stopped, setStopped] = useState(false)
     const [hasEnded, setHasEnded] = useState(false)
     const [notFound, setNotFound] = useState(false)
     const [loaded, setLoaded] = useState(false)
 
     const router = useRouter()
 
-    const countdownRef = useRef<CountdownApi>(null)
+    const countdownRef = useRef<Countdown>(null)
 
     const fetchReleaseGroup = async () => {
         const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
@@ -131,8 +131,9 @@ const MainGame = (props: { album: string, artist: string }) =>{
 
     const stopCountdown = () => {
         if (countdownRef.current){
-            countdownRef.current.stop();
+            countdownRef.current.pause();
         }
+        setStopped(true)
         setHasEnded(true)
     }
 
@@ -164,22 +165,26 @@ const MainGame = (props: { album: string, artist: string }) =>{
                 {hasEnded && (
                     <p>{correctGuesses.length} / {songs.length}</p>
                 )}
+                {!notFound && loaded && (
+                    <>
+                        <p className="mb-4">Selected Album: {albumName} by {artistName}</p>
+                        <div className="flex justify-between items-center w-full">
+                            <label htmlFor="song" className="text-left">Enter a Song</label>
+                            <Countdown
+                                date={endTime}
+                                ref={countdownRef}
+                                renderer={props => (
+                                    <p className="text-right">
+                                        {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                                        {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                                    </p>
+                                )}
+                                onComplete={gameEnd}/>
+                        </div>
+                    </>
+                )}
             {!hasEnded && !notFound && loaded && (
                 <>
-                    <p className="mb-4">Selected Album: {albumName} by {artistName}</p>
-                    <div className="flex justify-between items-center w-full">
-                        <label htmlFor="song" className="text-left">Enter a Song</label>
-                        <Countdown
-                            date={endTime}
-                            renderer={props => (
-                                <p className="text-right">
-                                    {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
-                                    {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
-                                </p>
-                            )}
-                            onComplete={gameEnd}/>
-                    </div>
-
                     <FormInput
                         id="song"
                         name="song"
