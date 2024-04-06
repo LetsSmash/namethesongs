@@ -108,6 +108,7 @@ const MainGame = (props: { album: string, artist: string }) =>{
             .replace(/Ä/g, 'A').replace(/ä/g, 'a')
             .replace(/Ö/g, 'O').replace(/ö/g, 'o')
             .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+            .replace(/[^a-zA-Z0-9]/g, "")
             .toLowerCase();
     };
 

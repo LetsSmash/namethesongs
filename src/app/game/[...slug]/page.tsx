@@ -10,9 +10,11 @@ export function generateMetadata({params}: {params: Params}){
     const slug = params.slug
 
     return {
+        title: `Name the Songs: ${decodeURI(slug[1])} by ${decodeURI(slug[0])}`,
+        metadataBase: new URL("https://namethesongs.vercel.app/"),
         openGraph: {
             //TODO: Fetch the Album name from MusicBrainz instead of referring to the Slug
-            title: `Name the Songs: ${slug[1]} by ${slug[0]}`,
+            title: `Name the Songs: ${decodeURI(slug[1])} by ${decodeURI(slug[0])}`,
             description: `Can you name the Songs on the Album "${decodeURI(slug[1])}" by ${decodeURI(slug[0])}? Find out by yourself`
         }
     }
