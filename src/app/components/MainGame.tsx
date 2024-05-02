@@ -62,6 +62,7 @@ const MainGame = (props: { album: string, artist: string }) =>{
                 'release-group': releaseGroupMBID,
                 fmt: 'json',
                 inc: 'media',
+                status: 'official',
             },
             headers: {
                 "User-Agent": "GuessTheSongs/0.1"
@@ -111,9 +112,11 @@ const MainGame = (props: { album: string, artist: string }) =>{
             .replace(/Ä/g, 'A').replace(/ä/g, 'a')
             .replace(/Ö/g, 'O').replace(/ö/g, 'o')
             .replace(/Ü/g, 'U').replace(/ü/g, 'u')
-            .replace(/[^a-zA-Z0-9]/g, "")
+            .replace(/&/g, 'and').replace(/and/g, '&')
+            .replace(/[^a-zA-Z0-9\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Cyrillic}]/gu, "")
             .toLowerCase();
     };
+    
 
     const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const guess = e.target.value;
@@ -166,7 +169,7 @@ const MainGame = (props: { album: string, artist: string }) =>{
                 {hasEnded && (
                     <p>{correctGuesses.length} / {songs.length}</p>
                 )}
-                {!notFound && loaded && (
+                {!notFound && loaded && !stopped &&(
                     <>
                         <p className="mb-4">Selected Album: {albumName} by {artistName}</p>
                         <div className="flex justify-between items-center w-full">
@@ -184,7 +187,7 @@ const MainGame = (props: { album: string, artist: string }) =>{
                         </div>
                     </>
                 )}
-            {!hasEnded && !notFound && loaded && (
+            {!hasEnded && !notFound && loaded && !stopped && (
                 <>
                     <FormInput
                         id="song"
@@ -192,7 +195,6 @@ const MainGame = (props: { album: string, artist: string }) =>{
                         type="text"
                         value={currentGuess}
                         onChange={inputChange}/>
-
                     <a onClick={stopCountdown} className="hover:underline hover:cursor-pointer">Give Up</a>
                 </>
                     )}
