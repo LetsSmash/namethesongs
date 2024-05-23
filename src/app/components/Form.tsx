@@ -83,7 +83,7 @@ const Form = () => {
             await sleep(1000)
             const { data } = await axios.get("https://musicbrainz.org/ws/2/release-group", {
                 params: {
-                    query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official AND -secondarytype:*`,
+                    query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (secondarytype:Spokenword OR secondarytype:Interview OR secondarytype:Audiobook OR secondarytype:audiodrama OR secondarytype:Live OR secondarytype:Remix OR secondarytype:DJ-mix OR secondarytype:Demo OR secondarytype:Fieldrecording)`,
                     limit: 100,
                     fmt: 'json',
                 },
