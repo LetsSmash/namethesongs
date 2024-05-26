@@ -18,11 +18,13 @@ const validationSchema = Yup.object({
   artist: Yup.string().required("Artist name is required"),
 });
 
+
 const Form = () => {
   const [submitted, setSubmitted] = useState(false);
   const [artist, setArtist] = useState("");
   const [album, setAlbum] = useState("");
   const [artistId, setArtistId] = useState("");
+  const [albumId, setAlbumId] = useState("");
 
   const router = useRouter();
 
@@ -42,9 +44,9 @@ const Form = () => {
 
   useEffect(() => {
     if (submitted) {
-      router.push(`/game/${artist}/${album}`);
+      router.push(`/game/${albumId}`);
     }
-  }, [submitted, album, artist, router]);
+  }, [submitted, albumId, router]);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -147,6 +149,9 @@ const Form = () => {
               }}
               onKeyDown={(e: any) => e.continuePropagation()}
               label="Enter an Album or an EP by that Artist"
+              onSelectionChange={(key) => {
+                setAlbumId(key.toString());
+              }}
             >
               {albumList.items.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>

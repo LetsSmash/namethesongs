@@ -7,11 +7,11 @@ import Countdown, { CountdownApi } from "react-countdown";
 import FormButton from "@/app/components/FormButton";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Root, Track } from "@/types/tracklist";
+import { TracklistRoot, Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
 
-const MainGame = (props: { album: string; artist: string }) => {
+const MainGame = (props: { album: string }) => {
   const [releaseGroupMBID, setReleaseGroupMBID] = useState<Group["id"]>("");
   const [releaseMBID, setReleaseMBID] = useState<Release["id"]>("");
   const [albumName, setAlbumName] = useState<Group["title"]>("");
@@ -29,40 +29,12 @@ const MainGame = (props: { album: string; artist: string }) => {
 
   const countdownRef = useRef<Countdown>(null);
 
-  const fetchReleaseGroup = async () => {
-    const { data } = await axios.get(
-      "https://musicbrainz.org/ws/2/release-group",
-      {
-        params: {
-          query: `releasegroup:${decodeURI(props.album)} AND artist:"${decodeURI(props.artist)}" AND (primarytype:album OR primarytype:ep) AND status:official`,
-          fmt: "json",
-          inc: "releases",
-        },
-        headers: {
-          "User-Agent": "GuessTheSongs/0.1",
-        },
-      }
-    );
-    setLoaded(true);
-
-    const releasegroups: Group[] = data["release-groups"];
-
-    if (releasegroups && releasegroups.length > 0) {
-      const releaseGroup = releasegroups[0];
-      setAlbumName(releaseGroup.title);
-      setArtistName(releaseGroup["artist-credit"][0].name);
-      setReleaseGroupMBID(releaseGroup.id);
-    } else {
-      setNotFound(true);
-    }
-  };
-
   const fetchRelease = async () => {
-    if (!releaseGroupMBID) return;
+    if (!props.album) return;
 
     const { data } = await axios.get(`https://musicbrainz.org/ws/2/release`, {
       params: {
-        "release-group": releaseGroupMBID,
+        "release-group": props.album,
         fmt: "json",
         inc: "media",
         status: "official",
@@ -105,7 +77,7 @@ const MainGame = (props: { album: string; artist: string }) => {
   };
 
   const fetchTracklist = async () => {
-    const { data } = await axios.get<Root>(
+    const { data } = await axios.get<TracklistRoot>(
       `https://musicbrainz.org/ws/2/release/${releaseMBID}`,
       {
         params: {
@@ -167,10 +139,6 @@ const MainGame = (props: { album: string; artist: string }) => {
     setStopped(true);
     setHasEnded(true);
   };
-
-  useEffect(() => {
-    fetchReleaseGroup();
-  }, []);
 
   // Fetch the tracklist once we have the release group MBID
   useEffect(() => {

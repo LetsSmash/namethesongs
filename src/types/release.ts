@@ -1,4 +1,4 @@
-export interface Root {
+export interface ReleaseRoot {
   releases: Release[];
   "release-count": number;
   "release-offset": number;

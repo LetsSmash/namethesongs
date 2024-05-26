@@ -1,4 +1,4 @@
-export interface Root {
+export interface TracklistRoot {
   "status-id": string;
   title: string;
   asin: any;

@@ -1,4 +1,4 @@
-export interface Root {
+export interface ReleaseGroupRoot {
   created: string;
   count: number;
   offset: number;

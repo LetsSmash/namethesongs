@@ -1,4 +1,4 @@
-export interface Root {
+export interface ArtistRoot {
   created: string;
   count: number;
   offset: number;
