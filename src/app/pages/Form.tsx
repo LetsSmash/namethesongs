@@ -27,6 +27,8 @@ import FormButton from "@/app/components/FormButton";
 import { Artist } from "@/types/artist";
 import { Group } from "@/types/releasegroup";
 import { avaiableSecondaryTypes } from "@/types/consts";
+import { fetchReleases } from "../utils";
+import { Release } from "@/types/release";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
@@ -37,6 +39,7 @@ const Form = () => {
   const [submitted, setSubmitted] = useState(false);
   const [artistId, setArtistId] = useState("");
   const [albumId, setAlbumId] = useState("");
+  const [releases, setReleases] = useState<Release[]>([]);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -116,6 +119,16 @@ const Form = () => {
     albumList.reload();
   }, [artistId]);
 
+  useEffect(() => {
+    async function getReleases() {
+      const fetchedReleases = await fetchReleases(albumId);
+      setReleases(fetchedReleases.releases);
+    }
+    if (albumId) {
+      getReleases();
+    }
+  }, [albumId]);
+
   return (
     <FormBackground>
       {!submitted && (
@@ -191,7 +204,25 @@ const Form = () => {
                     <ModalHeader className="flex flex-col gap-1">
                       Select a Release
                     </ModalHeader>
-                    <ModalBody>Placeholder</ModalBody>
+                    <ModalBody>
+                      <RadioGroup>
+                        {Array.isArray(releases) && releases.length > 0 ? (
+                          releases.map((release) => (
+                            <Radio value={release.id} key={release.id}>
+                              {release.title}
+                              {release.disambiguation
+                                ? ` (${release.disambiguation}, `
+                                : " ("}
+                              {release["release-events"][0]?.date ||
+                                "No date available"}
+                              {`, ${release.media[0]["track-count"]} Tracks)`}
+                            </Radio>
+                          ))
+                        ) : (
+                          <p>No releases available</p>
+                        )}
+                      </RadioGroup>
+                    </ModalBody>
                     <ModalFooter>
                       <Button color="danger" variant="light" onPress={onClose}>
                         Return to Form

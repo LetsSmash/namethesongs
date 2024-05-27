@@ -1,4 +1,5 @@
-import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
+import { Release, ReleaseRoot } from "@/types/release";
+import { Group } from "@/types/releasegroup";
 import axios from "axios";
 
 export const fetchAlbumInfos = async (id: string) => {
@@ -16,7 +17,29 @@ export const fetchAlbumInfos = async (id: string) => {
 
     return album;
   } catch (error) {
-    console.error('Error fetching album info:', error);
+    console.error("Error fetching album info:", error);
+    throw error;
+  }
+};
+
+export const fetchReleases = async (id: string) => {
+  try {
+    const { data } = await axios.get<ReleaseRoot>(
+      `https://musicbrainz.org/ws/2/release`,
+      {
+        params: {
+          "release-group": id,
+          fmt: "json",
+          limit: 100,
+          inc: "media",
+        },
+      }
+    );
+    const releases = data;
+
+    return releases
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 };
