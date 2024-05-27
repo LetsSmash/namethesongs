@@ -4,27 +4,41 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
-import { Autocomplete, AutocompleteItem } from "@nextui-org/react";
+import {
+  Autocomplete,
+  AutocompleteItem,
+  RadioGroup,
+  Radio,
+} from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
+} from "@nextui-org/react";
 
 import FormBackground from "@/app/components/FormBackground";
 import FormButton from "@/app/components/FormButton";
 import { Artist } from "@/types/artist";
 import { Group } from "@/types/releasegroup";
+import { avaiableSecondaryTypes } from "@/types/consts";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
   artist: Yup.string().required("Artist name is required"),
 });
 
-
 const Form = () => {
   const [submitted, setSubmitted] = useState(false);
-  const [artist, setArtist] = useState("");
-  const [album, setAlbum] = useState("");
   const [artistId, setArtistId] = useState("");
   const [albumId, setAlbumId] = useState("");
+
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const router = useRouter();
 
@@ -35,8 +49,6 @@ const Form = () => {
     },
     validationSchema,
     onSubmit: (values, { resetForm }) => {
-      setArtist(values.artist);
-      setAlbum(values.album);
       setSubmitted(true);
       resetForm();
     },
@@ -74,7 +86,7 @@ const Form = () => {
   });
 
   let albumList = useAsyncList<Group>({
-    async load({ signal, filterText }) {
+    async load({ signal }) {
       if (!formik.values.artist) {
         return { items: [] };
       }
@@ -84,7 +96,7 @@ const Form = () => {
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
-            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (secondarytype:Spokenword OR secondarytype:Interview OR secondarytype:Audiobook OR secondarytype:audiodrama OR secondarytype:Live OR secondarytype:Remix OR secondarytype:DJ-mix OR secondarytype:Demo OR secondarytype:Fieldrecording)`,
+            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${avaiableSecondaryTypes.join(" OR ")})`,
             limit: 100,
             fmt: "json",
           },
@@ -155,7 +167,8 @@ const Form = () => {
             >
               {albumList.items.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>
-                  {item.title}
+                  {item.title}{" "}
+                  {`(${item["secondary-types"] ? `${item["secondary-types"][0]}` : `${item["primary-type"]}`}, ${item["first-release-date"]})`}
                 </AutocompleteItem>
               ))}
             </Autocomplete>
@@ -165,7 +178,32 @@ const Form = () => {
             {formik.touched.artist && formik.errors.artist ? (
               <div className="text-red-500 text-xs">{formik.errors.artist}</div>
             ) : null}
-            <FormButton type="submit">Go!</FormButton>
+            <FormButton onPress={onOpen}>Go!</FormButton>
+            <Modal
+              isOpen={isOpen}
+              onOpenChange={onOpenChange}
+              isDismissable={false}
+              isKeyboardDismissDisabled={true}
+            >
+              <ModalContent>
+                {(onClose) => (
+                  <>
+                    <ModalHeader className="flex flex-col gap-1">
+                      Select a Release
+                    </ModalHeader>
+                    <ModalBody>Placeholder</ModalBody>
+                    <ModalFooter>
+                      <Button color="danger" variant="light" onPress={onClose}>
+                        Return to Form
+                      </Button>
+                      <Button color="primary" onPress={onClose} type="submit">
+                        Select this Release
+                      </Button>
+                    </ModalFooter>
+                  </>
+                )}
+              </ModalContent>
+            </Modal>
           </form>
         </>
       )}

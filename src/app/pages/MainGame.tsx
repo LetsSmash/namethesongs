@@ -6,10 +6,10 @@ import FormInput from "@/app/components/FormInput";
 import Countdown, { CountdownApi } from "react-countdown";
 import FormButton from "@/app/components/FormButton";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { TracklistRoot, Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
+import { fetchAlbumInfos } from "../utils";
 
 const MainGame = (props: { album: string }) => {
   const [releaseGroupMBID, setReleaseGroupMBID] = useState<Group["id"]>("");
@@ -22,8 +22,9 @@ const MainGame = (props: { album: string }) => {
   const [endTime] = useState(Date.now() + 5 * 60000);
   const [stopped, setStopped] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
-  const [notFound, setNotFound] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [remainingMinutes, setRemainingMinutes] = useState(0)
+  const [remainingSeconds, setRemainingSeconds] = useState(0)
 
   const router = useRouter();
 
@@ -43,6 +44,12 @@ const MainGame = (props: { album: string }) => {
         "User-Agent": "GuessTheSongs/0.1",
       },
     });
+    setLoaded(true);
+
+    const albumInfos = await fetchAlbumInfos(props.album);
+
+    setAlbumName(albumInfos.title);
+    setArtistName(albumInfos["artist-credit"][0].name)
 
     const releases: Release[] = data.releases;
 
@@ -99,7 +106,7 @@ const MainGame = (props: { album: string }) => {
 
   const normalizeString = (str: string) => {
     return str
-      .replace(/’/g, "'") // Replace curly apostrophes with straight ones
+      .replace(/’/g, "'")
       .replace(/Ä/g, "A")
       .replace(/ä/g, "a")
       .replace(/Ö/g, "O")
@@ -135,10 +142,18 @@ const MainGame = (props: { album: string }) => {
   const stopCountdown = () => {
     if (countdownRef.current) {
       countdownRef.current.pause();
+      setRemainingMinutes(countdownRef.current.getRenderProps().minutes)
+      setRemainingSeconds(countdownRef.current.getRenderProps().seconds)
     }
     setStopped(true);
     setHasEnded(true);
   };
+
+  useEffect(() => {
+    if (props.album) {
+      setReleaseGroupMBID(props.album)
+    }
+  }, [props.album])
 
   // Fetch the tracklist once we have the release group MBID
   useEffect(() => {
@@ -155,18 +170,24 @@ const MainGame = (props: { album: string }) => {
 
   useEffect(() => {
     if (correctGuesses.length === songs.length && songs.length > 0) {
-      gameEnd();
+      stopCountdown();
     }
   }, [correctGuesses, songs]);
 
   return (
     <>
       {hasEnded && (
-        <p>
+        <p className="text-center">
           {correctGuesses.length} / {songs.length}
         </p>
       )}
-      {!notFound && loaded && !stopped && (
+      {stopped && (
+        <p className="text-center">
+          {remainingMinutes < 10 ? `0${remainingMinutes}` : remainingMinutes}:
+          {remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds}
+        </p>
+      )}
+      {loaded && !hasEnded && (
         <>
           <p className="mb-4">
             Selected Album: {albumName} by {artistName}
@@ -189,7 +210,8 @@ const MainGame = (props: { album: string }) => {
           </div>
         </>
       )}
-      {!hasEnded && !notFound && loaded && !stopped && (
+      
+      {!hasEnded && loaded && !stopped && (
         <>
           <FormInput
             id="song"
@@ -231,19 +253,6 @@ const MainGame = (props: { album: string }) => {
           </ul>
         )}
       </div>
-      {notFound && (
-        <div className="bg-red-200 text-black px-2 py-2">
-          <p>
-            {
-              "You have made an invalid entry, or your Album wasn't found on MusicBrainz. "
-            }{" "}
-            <Link href={"/"} className="underline">
-              Back to the Form
-            </Link>
-            .
-          </p>
-        </div>
-      )}
       {hasEnded && (
         <FormButton onClick={() => router.push("/")}>Restart</FormButton>
       )}
