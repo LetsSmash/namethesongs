@@ -14,7 +14,6 @@ export async function generateMetadata({ params }: { params: Params }) {
   return {
     metadataBase: new URL("https://namethesongs.vercel.app/"),
     openGraph: {
-      // TODO: Change this, i don't have the nerves to do it now.`
       title: `Name the Songs: ${albumInfo.title} by ${albumInfo["artist-credit"][0].name}`,
       description: `Can you name the Songs on the Album "${albumInfo.title}" by ${albumInfo["artist-credit"][0].name}?`,
     },
