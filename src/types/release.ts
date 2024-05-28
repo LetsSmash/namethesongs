@@ -11,6 +11,7 @@ export interface Release {
   country: string;
   id: string;
   "packaging-id": string;
+  "release-group": ReleaseGroup;
   title: string;
   packaging: string;
   status: string;
@@ -44,6 +45,17 @@ export interface Medum {
   position: number;
   format: string;
   "track-count": number;
+}
+
+export interface ReleaseGroup {
+  "primary-type-id": string;
+  title: string;
+  "secondary-types": any[];
+  "secondary-type-ids": any[];
+  id: string;
+  "first-release-date": string;
+  "primary-type": string;
+  disambiguation: string;
 }
 
 export interface CoverArtArchive {

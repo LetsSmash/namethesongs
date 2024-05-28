@@ -43,3 +43,23 @@ export const fetchReleases = async (id: string) => {
     throw error;
   }
 };
+
+export const fetchReleaseGroupFromRelease = async (id: string) => {
+  try {
+    const { data } = await axios.get<Release>(
+      `https://musicbrainz.org/ws/2/release/${id}`,
+      {
+        params: {
+          inc: "release-groups",
+          fmt: "json",
+        },
+      }
+    );
+    const album = data;
+
+    return album;
+  } catch (error) {
+    console.error("Error fetching album info:", error);
+    throw error;
+  }
+};

@@ -9,10 +9,6 @@ import {
   AutocompleteItem,
   RadioGroup,
   Radio,
-} from "@nextui-org/react";
-import { useAsyncList } from "@react-stately/data";
-import axios from "axios";
-import {
   Modal,
   ModalContent,
   ModalHeader,
@@ -21,6 +17,8 @@ import {
   Button,
   useDisclosure,
 } from "@nextui-org/react";
+import { useAsyncList } from "@react-stately/data";
+import axios from "axios";
 
 import FormBackground from "@/app/components/FormBackground";
 import FormButton from "@/app/components/FormButton";
@@ -40,6 +38,7 @@ const Form = () => {
   const [artistId, setArtistId] = useState("");
   const [albumId, setAlbumId] = useState("");
   const [releases, setReleases] = useState<Release[]>([]);
+  const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -58,10 +57,10 @@ const Form = () => {
   });
 
   useEffect(() => {
-    if (submitted) {
-      router.push(`/game/${albumId}`);
+    if (submitted && selectedRelease) {
+      router.push(`/game/${selectedRelease}`);
     }
-  }, [submitted, albumId, router]);
+  }, [submitted, selectedRelease, router]);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -129,6 +128,13 @@ const Form = () => {
     }
   }, [albumId]);
 
+  const uniqueTrackCountReleases = releases.filter(
+    (release, index, self) =>
+      self.findIndex(
+        (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
+      ) === index
+  );
+
   return (
     <FormBackground>
       {!submitted && (
@@ -181,7 +187,7 @@ const Form = () => {
               {albumList.items.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>
                   {item.title}{" "}
-                  {`(${item["secondary-types"] ? `${item["secondary-types"][0]}` : `${item["primary-type"]}`}, ${item["first-release-date"]})`}
+                  {`(${item["secondary-types"] ? `${item["secondary-types"][0]}` : `${item["primary-type"]}`}, ${item["first-release-date"] ? item["first-release-date"].substring(0, 4) : `Date unavaiable`})`}
                 </AutocompleteItem>
               ))}
             </Autocomplete>
@@ -205,17 +211,21 @@ const Form = () => {
                       Select a Release
                     </ModalHeader>
                     <ModalBody>
-                      <RadioGroup>
-                        {Array.isArray(releases) && releases.length > 0 ? (
-                          releases.map((release) => (
+                      <RadioGroup
+                        value={selectedRelease}
+                        onValueChange={setSelectedRelease}
+                      >
+                        {Array.isArray(uniqueTrackCountReleases) &&
+                        uniqueTrackCountReleases.length > 0 ? (
+                          uniqueTrackCountReleases.map((release) => (
                             <Radio value={release.id} key={release.id}>
                               {release.title}
                               {release.disambiguation
                                 ? ` (${release.disambiguation}, `
                                 : " ("}
-                              {release["release-events"][0]?.date ||
-                                "No date available"}
-                              {`, ${release.media[0]["track-count"]} Tracks)`}
+                              {`${release.media[0]["track-count"]} Tracks`}
+                              {`, ${release["release-events"][0]?.date})` ||
+                                ", No date available)"}
                             </Radio>
                           ))
                         ) : (
@@ -227,7 +237,11 @@ const Form = () => {
                       <Button color="danger" variant="light" onPress={onClose}>
                         Return to Form
                       </Button>
-                      <Button color="primary" onPress={onClose} type="submit">
+                      <Button
+                        color="primary"
+                        type="submit"
+                        onPress={() => setSubmitted(true)}
+                      >
                         Select this Release
                       </Button>
                     </ModalFooter>

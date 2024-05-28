@@ -1,74 +1,86 @@
 export interface TracklistRoot {
-  "status-id": string;
-  title: string;
-  asin: any;
-  quality: string;
   media: Medum[];
-  id: string;
+  quality: string;
   barcode: string;
-  date: string;
-  "packaging-id": string;
-  country: string;
-  status: string;
-  packaging: string;
+  "status-id": string;
   disambiguation: string;
-  "release-events": Event[];
-  "cover-art-archive": CoverArtArchive;
+  "packaging-id": string;
+  "release-group": ReleaseGroup;
   "text-representation": TextRepresentation;
+  status: string;
+  date: string;
+  packaging: string;
+  title: string;
+  "release-events": Event[];
+  id: string;
+  "cover-art-archive": CoverArtArchive;
+  country: string;
+  asin: string;
 }
 
 export interface Medum {
+  "format-id": string;
+  title: string;
+  format: string;
   tracks: Track[];
-  "track-count": number;
   "track-offset": number;
   position: number;
-  "format-id": string;
-  format: string;
-  title: string;
+  "track-count": number;
 }
 
 export interface Track {
+  position: number;
+  length?: number;
   title: string;
   recording?: Recording;
   number?: string;
-  position: number;
   id?: string;
-  length?: number;
 }
 
 export interface Recording {
+  length: number;
   title: string;
   id: string;
-  video: boolean;
-  length: number;
   "first-release-date": string;
   disambiguation: string;
+  video: boolean;
 }
 
-export interface Event {
-  area: Area;
-  date: string;
-}
-
-export interface Area {
-  "type-id": any;
-  name: string;
-  "sort-name": string;
-  disambiguation: string;
-  "iso-3166-1-codes": string[];
-  type: any;
+export interface ReleaseGroup {
+  "primary-type-id": string;
+  title: string;
+  "secondary-types": any[];
+  "secondary-type-ids": any[];
   id: string;
-}
-
-export interface CoverArtArchive {
-  darkened: boolean;
-  count: number;
-  front: boolean;
-  back: boolean;
-  artwork: boolean;
+  "first-release-date": string;
+  "primary-type": string;
+  disambiguation: string;
 }
 
 export interface TextRepresentation {
-  language: string;
   script: string;
+  language: string;
+}
+
+export interface Event {
+  date: string;
+  area: Area;
+}
+
+export interface Area {
+  "sort-name": string;
+  type: any;
+  name: string;
+  "iso-3166-1-codes": string[];
+  disambiguation: string;
+  id: string;
+  "type-id": any;
+}
+
+export interface CoverArtArchive {
+  count: number;
+  darkened: boolean;
+  artwork: boolean;
+  front: boolean;
+  back: boolean;
 }

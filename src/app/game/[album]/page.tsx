@@ -1,6 +1,6 @@
 import FormBackground from "@/app/components/FormBackground";
 import MainGame from "@/app/pages/MainGame";
-import { fetchAlbumInfos } from "@/app/utils";
+import { fetchAlbumInfos, fetchReleaseGroupFromRelease } from "@/app/utils";
 
 interface Params {
   album: string;
@@ -8,14 +8,15 @@ interface Params {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const id = params.album;
-  const albumInfo = await fetchAlbumInfos(id);
+  const releaseInfo = await fetchReleaseGroupFromRelease(id)
+  const albumInfo = await fetchAlbumInfos(releaseInfo["release-group"].id)
 
   return {
     metadataBase: new URL("https://namethesongs.vercel.app/"),
     openGraph: {
-      // TODO: Change this, i don't have the nerves to do it now
-      title: albumInfo.title,
-      description: `Can you name the Songs on the Album ${albumInfo.title}? Find out by yourself.`
+      // TODO: Change this, i don't have the nerves to do it now.`
+      title: `Name the Songs: ${albumInfo.title} by ${albumInfo["artist-credit"][0].name}`,
+      description: `Can you name the Songs on the Album "${albumInfo.title}" by ${albumInfo["artist-credit"][0].name}?`,
     },
   };
 }
