@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown, { CountdownApi } from "react-countdown";
@@ -29,7 +29,7 @@ const MainGame = (props: { album: string }) => {
 
   const countdownRef = useRef<Countdown>(null);
 
-  const fetchTracklist = async () => {
+  const fetchTracklist = useCallback(async () => {
     const { data } = await axios.get<TracklistRoot>(
       `https://musicbrainz.org/ws/2/release/${releaseMBID}`,
       {
@@ -52,7 +52,7 @@ const MainGame = (props: { album: string }) => {
       title: track.title,
     }));
     setSongs(fetchedSongs);
-  };
+  }, [releaseMBID]);
 
   const normalizeString = (str: string) => {
     return str
@@ -109,7 +109,7 @@ const MainGame = (props: { album: string }) => {
     if (releaseMBID) {
       fetchTracklist();
     }
-  }, [releaseMBID]);
+  }, [releaseMBID, fetchTracklist]);
 
   useEffect(() => {
     if (correctGuesses.length === songs.length && songs.length > 0) {
@@ -163,19 +163,19 @@ const MainGame = (props: { album: string }) => {
             value={currentGuess}
             onChange={inputChange}
           />
-          <a
+          <button
             onClick={stopCountdown}
             className="hover:underline hover:cursor-pointer"
           >
             Give Up
-          </a>
+          </button>
         </>
       )}
       <div>
         {songs.length > 0 && (
           <ul className={hasEnded ? "" : "mt-6"}>
-            {songs.map((song: Track, index) => (
-              <li key={index} className="mt-3">
+            {songs.map((song: Track) => (
+              <li key={song.position} className="mt-3">
                 {song.position}.{" "}
                 {correctGuesses.includes(song.title) && !hasEnded && (
                   <span>{song.title}</span>

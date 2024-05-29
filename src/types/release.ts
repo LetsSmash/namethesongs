@@ -17,7 +17,7 @@ export interface Release {
   status: string;
   quality: string;
   media: Medum[];
-  asin: any;
+  asin: string;
   "cover-art-archive": CoverArtArchive;
   "text-representation": TextRepresentation;
   disambiguation: string;
@@ -32,10 +32,10 @@ export interface Event {
 export interface Area {
   name: string;
   "iso-3166-1-codes": string[];
-  "type-id": any;
+  "type-id": string;
   disambiguation: string;
   id: string;
-  type: any;
+  type: string;
   "sort-name": string;
 }
 
@@ -50,8 +50,8 @@ export interface Medum {
 export interface ReleaseGroup {
   "primary-type-id": string;
   title: string;
-  "secondary-types": any[];
-  "secondary-type-ids": any[];
+  "secondary-types": string[];
+  "secondary-type-ids": string[];
   id: string;
   "first-release-date": string;
   "primary-type": string;
