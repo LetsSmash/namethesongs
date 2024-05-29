@@ -37,11 +37,11 @@ export interface Alias {
   "sort-name": string;
   "type-id": string;
   name: string;
-  locale: any;
+  locale: string;
   type: string;
-  primary: any;
-  "begin-date": any;
-  "end-date": any;
+  primary: string;
+  "begin-date": string;
+  "end-date": string;
 }
 
 export interface Release {

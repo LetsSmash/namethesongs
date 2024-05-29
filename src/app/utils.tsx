@@ -25,7 +25,7 @@ export const fetchAlbumInfos = async (id: string) => {
 export const fetchReleases = async (id: string) => {
   try {
     const { data } = await axios.get<ReleaseRoot>(
-      `https://musicbrainz.org/ws/2/release`,
+      "https://musicbrainz.org/ws/2/release",
       {
         params: {
           "release-group": id,

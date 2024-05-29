@@ -1,4 +1,4 @@
-export const avaiableSecondaryTypes = [
+export const availableSecondaryTypes = [
     'secondarytype:Spokenword',
     'secondarytype:Interview',
     'secondarytype:Audiobook',

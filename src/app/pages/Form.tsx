@@ -24,7 +24,7 @@ import FormBackground from "@/app/components/FormBackground";
 import FormButton from "@/app/components/FormButton";
 import { Artist } from "@/types/artist";
 import { Group } from "@/types/releasegroup";
-import { avaiableSecondaryTypes } from "@/types/consts";
+import { availableSecondaryTypes } from "@/types/consts";
 import { fetchReleases } from "../utils";
 import { Release } from "@/types/release";
 
@@ -98,7 +98,7 @@ const Form = () => {
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
-            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${avaiableSecondaryTypes.join(" OR ")})`,
+            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(" OR ")})`,
             limit: 100,
             fmt: "json",
           },
@@ -114,6 +114,7 @@ const Form = () => {
     },
   });
 
+  // TODO: The function to fetch Albums should be a new useCallback Function, that will resolve that eslint error
   useEffect(() => {
     albumList.reload();
   }, [artistId]);
@@ -181,13 +182,22 @@ const Form = () => {
               onKeyDown={(e: any) => e.continuePropagation()}
               label="Enter an Album or an EP by that Artist"
               onSelectionChange={(key) => {
+                if (key) {
                 setAlbumId(key.toString());
+                }
               }}
             >
               {albumList.items.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>
-                  {item.title}{" "}
-                  {`(${item["secondary-types"] ? `${item["secondary-types"][0]}` : `${item["primary-type"]}`}, ${item["first-release-date"] ? item["first-release-date"].substring(0, 4) : `Date unavaiable`})`}
+                  {item.title} (
+                  {item["secondary-types"]
+                    ? item["secondary-types"][0]
+                    : item["primary-type"]}
+                  ,{" "}
+                  {item["first-release-date"]
+                    ? item["first-release-date"].substring(0, 4)
+                    : "Date unavailable"}
+                  )
                 </AutocompleteItem>
               ))}
             </Autocomplete>
