@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.2.10",
-    "@react-stately/data": "^3.11.2",
+    "@react-stately/data": "^3.11.3",
     "@tailwindcss/forms": "^0.5.7",
     "@vercel/analytics": "^1.2.2",
     "axios": "^1.6.7",
