@@ -159,7 +159,9 @@ const Form = () => {
               className="mb-4"
               label="Enter an Artist"
               onSelectionChange={(key) => {
+                if (key) {
                 setArtistId(key.toString());
+                }
               }}
             >
               {list.items.map((item) => (
