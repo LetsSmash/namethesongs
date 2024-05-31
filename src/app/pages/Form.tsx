@@ -158,7 +158,9 @@ const Form = () => {
               className="mb-4"
               label="Enter an Artist"
               onSelectionChange={(key) => {
+                if (key) {
                 setArtistId(key.toString());
+                }
               }}
             >
               {list.items.map((item) => (
@@ -181,7 +183,9 @@ const Form = () => {
               onKeyDown={(e: any) => e.continuePropagation()}
               label="Enter an Album or an EP by that Artist"
               onSelectionChange={(key) => {
+                if (key) {
                 setAlbumId(key.toString());
+                }
               }}
             >
               {albumList.items.map((item) => (
