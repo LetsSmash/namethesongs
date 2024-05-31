@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
@@ -87,14 +87,13 @@ const Form = () => {
     },
   });
 
-  let albumList = useAsyncList<Group>({
-    async load({ signal }) {
-      if (!formik.values.artist) {
+  const loadAlbums = useCallback(
+    async ({ signal }: { signal: AbortSignal }) => {
+      if (!artistId) {
         return { items: [] };
       }
-
       await sleep(1000);
-      const { data } = await axios.get(
+      const response = await axios.get(
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
@@ -108,15 +107,23 @@ const Form = () => {
           signal: signal,
         }
       );
+
       return {
-        items: data["release-groups"],
+        items: response.data["release-groups"],
       };
+    },
+    [artistId]
+  );
+
+  let albumList = useAsyncList<Group>({
+    async load({ signal }) {
+      return loadAlbums({ signal });
     },
   });
 
-  // TODO: The function to fetch Albums should be a new useCallback Function, that will resolve that eslint error
   useEffect(() => {
     albumList.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistId]);
 
   useEffect(() => {
@@ -160,7 +167,7 @@ const Form = () => {
               label="Enter an Artist"
               onSelectionChange={(key) => {
                 if (key) {
-                setArtistId(key.toString());
+                  setArtistId(key.toString());
                 }
               }}
             >
@@ -185,7 +192,7 @@ const Form = () => {
               label="Enter an Album or an EP by that Artist"
               onSelectionChange={(key) => {
                 if (key) {
-                setAlbumId(key.toString());
+                  setAlbumId(key.toString());
                 }
               }}
             >
