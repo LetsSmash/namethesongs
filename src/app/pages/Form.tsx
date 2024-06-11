@@ -216,9 +216,15 @@ const Form = () => {
             {formik.touched.artist && formik.errors.artist ? (
               <div className="text-red-500 text-xs">{formik.errors.artist}</div>
             ) : null}
-            <FormButton onPress={() => {if (formik.values.album && formik.values.artist) {
-              onOpen()
-            }}}>Go!</FormButton>
+            <FormButton
+              onPress={() => {
+                if (formik.values.album && formik.values.artist) {
+                  onOpen();
+                }
+              }}
+            >
+              Go!
+            </FormButton>
             <Modal
               isOpen={isOpen}
               onOpenChange={onOpenChange}
