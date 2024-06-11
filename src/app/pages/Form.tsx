@@ -136,11 +136,22 @@ const Form = () => {
     }
   }, [albumId]);
 
+  const sortedAlbums = albumList.items.sort((a, b) => {
+    return (
+      new Date(a["first-release-date"]).getTime() -
+      new Date(b["first-release-date"]).getTime()
+    );
+  });
+
   const uniqueTrackCountReleases = releases.filter(
     (release, index, self) =>
       self.findIndex(
         (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
       ) === index
+  );
+
+  const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
+    (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
   );
 
   return (
@@ -196,7 +207,7 @@ const Form = () => {
                 }
               }}
             >
-              {albumList.items.map((item) => (
+              {sortedAlbums.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>
                   {item.title} (
                   {item["secondary-types"]
@@ -221,6 +232,10 @@ const Form = () => {
                 if (formik.values.album && formik.values.artist) {
                   onOpen();
                 }
+                if (uniqueTrackCountReleases.length == 1) {
+                  setSelectedRelease(uniqueTrackCountReleases[0].id);
+                  setSubmitted(true);
+                }
               }}
             >
               Go!
@@ -242,9 +257,9 @@ const Form = () => {
                         value={selectedRelease}
                         onValueChange={setSelectedRelease}
                       >
-                        {Array.isArray(uniqueTrackCountReleases) &&
-                        uniqueTrackCountReleases.length > 0 ? (
-                          uniqueTrackCountReleases.map((release) => (
+                        {Array.isArray(sortedTrackCountReleases) &&
+                        sortedTrackCountReleases.length > 0 ? (
+                          sortedTrackCountReleases.map((release) => (
                             <Radio value={release.id} key={release.id}>
                               {release.title}
                               {release.disambiguation
