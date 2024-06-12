@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ import FormBackground from "@/app/components/FormBackground";
 import FormButton from "@/app/components/FormButton";
 import { Artist } from "@/types/artist";
 import { Group } from "@/types/releasegroup";
-import { avaiableSecondaryTypes } from "@/types/consts";
+import { availableSecondaryTypes } from "@/types/consts";
 import { fetchReleases } from "../utils";
 import { Release } from "@/types/release";
 
@@ -87,18 +87,17 @@ const Form = () => {
     },
   });
 
-  let albumList = useAsyncList<Group>({
-    async load({ signal }) {
-      if (!formik.values.artist) {
+  const loadAlbums = useCallback(
+    async ({ signal }: { signal: AbortSignal }) => {
+      if (!artistId) {
         return { items: [] };
       }
-
       await sleep(1000);
-      const { data } = await axios.get(
+      const response = await axios.get(
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
-            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${avaiableSecondaryTypes.join(" OR ")})`,
+            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(" OR ")})`,
             limit: 100,
             fmt: "json",
           },
@@ -108,14 +107,23 @@ const Form = () => {
           signal: signal,
         }
       );
+
       return {
-        items: data["release-groups"],
+        items: response.data["release-groups"],
       };
+    },
+    [artistId]
+  );
+
+  let albumList = useAsyncList<Group>({
+    async load({ signal }) {
+      return loadAlbums({ signal });
     },
   });
 
   useEffect(() => {
     albumList.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistId]);
 
   useEffect(() => {
@@ -128,11 +136,22 @@ const Form = () => {
     }
   }, [albumId]);
 
+  const sortedAlbums = albumList.items.sort((a, b) => {
+    return (
+      new Date(a["first-release-date"]).getTime() -
+      new Date(b["first-release-date"]).getTime()
+    );
+  });
+
   const uniqueTrackCountReleases = releases.filter(
     (release, index, self) =>
       self.findIndex(
         (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
       ) === index
+  );
+
+  const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
+    (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
   );
 
   return (
@@ -159,7 +178,7 @@ const Form = () => {
               label="Enter an Artist"
               onSelectionChange={(key) => {
                 if (key) {
-                setArtistId(key.toString());
+                  setArtistId(key.toString());
                 }
               }}
             >
@@ -184,14 +203,21 @@ const Form = () => {
               label="Enter an Album or an EP by that Artist"
               onSelectionChange={(key) => {
                 if (key) {
-                setAlbumId(key.toString());
+                  setAlbumId(key.toString());
                 }
               }}
             >
-              {albumList.items.map((item) => (
+              {sortedAlbums.map((item) => (
                 <AutocompleteItem key={item.id} textValue={item.title}>
-                  {item.title}{" "}
-                  {`(${item["secondary-types"] ? `${item["secondary-types"][0]}` : `${item["primary-type"]}`}, ${item["first-release-date"] ? item["first-release-date"].substring(0, 4) : `Date unavaiable`})`}
+                  {item.title} (
+                  {item["secondary-types"]
+                    ? item["secondary-types"][0]
+                    : item["primary-type"]}
+                  ,{" "}
+                  {item["first-release-date"]
+                    ? item["first-release-date"].substring(0, 4)
+                    : "Date unavailable"}
+                  )
                 </AutocompleteItem>
               ))}
             </Autocomplete>
@@ -201,9 +227,19 @@ const Form = () => {
             {formik.touched.artist && formik.errors.artist ? (
               <div className="text-red-500 text-xs">{formik.errors.artist}</div>
             ) : null}
-            <FormButton onPress={() => {if (formik.values.album && formik.values.artist) {
-              onOpen()
-            }}}>Go!</FormButton>
+            <FormButton
+              onPress={() => {
+                if (formik.values.album && formik.values.artist) {
+                  onOpen();
+                }
+                if (uniqueTrackCountReleases.length == 1) {
+                  setSelectedRelease(uniqueTrackCountReleases[0].id);
+                  setSubmitted(true);
+                }
+              }}
+            >
+              Go!
+            </FormButton>
             <Modal
               isOpen={isOpen}
               onOpenChange={onOpenChange}
@@ -221,9 +257,9 @@ const Form = () => {
                         value={selectedRelease}
                         onValueChange={setSelectedRelease}
                       >
-                        {Array.isArray(uniqueTrackCountReleases) &&
-                        uniqueTrackCountReleases.length > 0 ? (
-                          uniqueTrackCountReleases.map((release) => (
+                        {Array.isArray(sortedTrackCountReleases) &&
+                        sortedTrackCountReleases.length > 0 ? (
+                          sortedTrackCountReleases.map((release) => (
                             <Radio value={release.id} key={release.id}>
                               {release.title}
                               {release.disambiguation

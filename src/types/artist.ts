@@ -26,7 +26,7 @@ export interface Artist {
 
 export interface LifeSpan {
   begin?: string;
-  ended: any;
+  ended: string;
 }
 
 export interface Area {
@@ -39,7 +39,7 @@ export interface Area {
 }
 
 export interface LifeSpan2 {
-  ended: any;
+  ended: string;
 }
 
 export interface BeginArea {
@@ -52,7 +52,7 @@ export interface BeginArea {
 }
 
 export interface LifeSpan3 {
-  ended: any;
+  ended: string;
 }
 
 export interface Alias {
@@ -61,9 +61,9 @@ export interface Alias {
   name: string;
   locale?: string;
   type?: string;
-  primary: any;
+  primary: string;
   "begin-date"?: string;
-  "end-date": any;
+  "end-date": string;
 }
 
 export interface Tag {

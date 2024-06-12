@@ -49,8 +49,8 @@ export interface Recording {
 export interface ReleaseGroup {
   "primary-type-id": string;
   title: string;
-  "secondary-types": any[];
-  "secondary-type-ids": any[];
+  "secondary-types": string[];
+  "secondary-type-ids": string[];
   id: string;
   "first-release-date": string;
   "primary-type": string;
@@ -69,12 +69,12 @@ export interface Event {
 
 export interface Area {
   "sort-name": string;
-  type: any;
+  type: string;
   name: string;
   "iso-3166-1-codes": string[];
   disambiguation: string;
   id: string;
-  "type-id": any;
+  "type-id": string;
 }
 
 export interface CoverArtArchive {
