@@ -51,6 +51,11 @@ Navigate to `http://localhost:3000` in your browser to see the application in ac
 - **Guess Tracks**: Type your guesses for the song titles within the given time limit. Correct guesses will be highlighted.
 - **End Game**: The game ends either when the time runs out or all songs are correctly guessed. You can also manually end the game by clicking the "Give Up" option.
 
+## Upcoming Features
+- Guess the complete Discography instead of just one Album
+- Highscores (local and online)
+- Speedrun Mode (Counts how fast you were)
+- Multiplayer Mode (Against Friends or online)
 ## Contributing
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
