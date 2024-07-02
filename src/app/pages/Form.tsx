@@ -245,6 +245,7 @@ const Form = () => {
               onOpenChange={onOpenChange}
               isDismissable={false}
               isKeyboardDismissDisabled={true}
+              placement={"center"}
             >
               <ModalContent>
                 {(onClose) => (
