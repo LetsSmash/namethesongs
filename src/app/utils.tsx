@@ -1,5 +1,5 @@
-import { Release, ReleaseRoot } from "@/types/release";
-import { Group } from "@/types/releasegroup";
+import {Release, ReleaseRoot} from "@/types/release";
+import {Group} from "@/types/releasegroup";
 import axios from "axios";
 
 export const fetchAlbumInfos = async (id: string) => {
@@ -13,9 +13,7 @@ export const fetchAlbumInfos = async (id: string) => {
         },
       }
     );
-    const album = data;
-
-    return album;
+    return data;
   } catch (error) {
     console.error("Error fetching album info:", error);
     throw error;
@@ -35,9 +33,7 @@ export const fetchReleases = async (id: string) => {
         },
       }
     );
-    const releases = data;
-
-    return releases
+    return data
   } catch (error) {
     console.error(error);
     throw error;
@@ -55,9 +51,7 @@ export const fetchReleaseGroupFromRelease = async (id: string) => {
         },
       }
     );
-    const album = data;
-
-    return album;
+    return data;
   } catch (error) {
     console.error("Error fetching album info:", error);
     throw error;
