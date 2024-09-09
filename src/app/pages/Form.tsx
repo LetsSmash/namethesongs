@@ -164,7 +164,7 @@ const Form = () => {
             className="block text-sm font-medium leading-6 text-gray-900"
             onSubmit={formik.handleSubmit}
           >
-            <Tabs className="grid">
+            <Tabs className="grid mb-3">
               <Tab key="album" title="Album">
                 <Autocomplete
                   id="artist"
@@ -305,7 +305,34 @@ const Form = () => {
                 </Modal>
               </Tab>
               <Tab key="artist" title="Artist">
-                <p>Coming soon...</p>
+              <Autocomplete
+                  id="artist"
+                  name="artist"
+                  items={list.items}
+                  value={formik.values.artist}
+                  inputValue={list.filterText}
+                  onInputChange={(value: string) => {
+                    formik.setFieldValue("artist", value);
+                    list.setFilterText(value);
+                  }}
+                  onKeyDown={(e: any) => e.continuePropagation()}
+                  isLoading={list.isLoading}
+                  className="mb-4"
+                  label="Enter an Artist"
+                  onSelectionChange={(key) => {
+                    if (key) {
+                      setArtistId(key.toString());
+                    }
+                  }}
+                >
+                  {list.items.map((item) => (
+                    <AutocompleteItem key={item.id} textValue={item.name}>
+                      {item.name}{" "}
+                      {item.disambiguation ? `(${item.disambiguation})` : ""}
+                    </AutocompleteItem>
+                  ))}
+                </Autocomplete>
+                <FormButton>Go!</FormButton>
               </Tab>
             </Tabs>
           </form>
