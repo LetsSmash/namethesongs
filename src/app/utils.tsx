@@ -1,5 +1,6 @@
+import { availableSecondaryTypes } from "@/types/consts";
 import {Release, ReleaseRoot} from "@/types/release";
-import {Group} from "@/types/releasegroup";
+import {Group, ReleaseGroupRoot} from "@/types/releasegroup";
 import axios from "axios";
 
 export const fetchAlbumInfos = async (id: string) => {
@@ -54,6 +55,25 @@ export const fetchReleaseGroupFromRelease = async (id: string) => {
     return data;
   } catch (error) {
     console.error("Error fetching album info:", error);
+    throw error;
+  }
+};
+
+export const fetchArtistReleaseGroups = async (id: string) => {
+  try {
+    const { data } = await axios.get<ReleaseGroupRoot>(
+      "https://musicbrainz.org/ws/2/release-group",
+      {
+        params: {
+          query: `arid:${id} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(" OR ")})`,
+          fmt: "json",
+          limit: 100,
+        },
+      }
+    );
+    return data["release-groups"];
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 };
