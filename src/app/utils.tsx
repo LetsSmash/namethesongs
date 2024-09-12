@@ -22,7 +22,6 @@ export const fetchAlbumInfos = async (id: string) => {
 };
 
 export const fetchReleases = async (id: string) => {
-  setTimeout(() => {}, 1000)
   try {
     const { data } = await axios.get<ReleaseRoot>(
       "https://musicbrainz.org/ws/2/release",
@@ -34,7 +33,7 @@ export const fetchReleases = async (id: string) => {
           inc: "media",
         },
         headers: {
-          "User-Agent": "GuessTheSongs/0.1",
+          "User-Agent": "GuessTheSongs/1.0.0 ( http://namethesongs.vercel.app )",
         },
       }
     );

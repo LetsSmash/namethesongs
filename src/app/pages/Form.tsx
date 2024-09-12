@@ -41,8 +41,11 @@ const Form = () => {
   const [albumId, setAlbumId] = useState("");
   const [releases, setReleases] = useState<Release[]>([]);
   const [releaseGroups, setReleaseGroups] = useState<Group[]>([]);
-  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<ReleaseGroup[]>([]);
+  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<
+    ReleaseGroup[]
+  >([]);
   const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
+  const [selectedReleases, setSelectedReleases] = useState<Release["id"]>("");
   const [selectedTab, setSelectedTab] = useState<Key>("album");
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -52,6 +55,7 @@ const Form = () => {
   interface ReleaseGroup {
     name: string;
     releases: Release[];
+    releaseDate: string;
   }
 
   const formik = useFormik({
@@ -115,7 +119,9 @@ const Form = () => {
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
-            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(" OR ")})`,
+            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(
+              " OR "
+            )})`,
             limit: 100,
             fmt: "json",
           },
@@ -146,23 +152,59 @@ const Form = () => {
 
   useEffect(() => {
     const getReleaseGroups = async () => {
-      await sleep(1000);
       const fetchedReleaseGroups = await fetchArtistReleaseGroups(artistId);
       setReleaseGroups(fetchedReleaseGroups);
 
-      // Fetch releases for each release group and populate releaseGroupsReleases array
-      const releasesData = await Promise.all(
-        fetchedReleaseGroups.map(async (group) => {
-          await sleep(1000);
-          const fetchedReleases = await fetchReleases(group.id);
-          return {
+      const releasesData: ReleaseGroup[] = [];
+
+      for (const group of fetchedReleaseGroups) {
+        await sleep(1000);
+        try {
+          const response = await fetchReleases(group.id);
+          releasesData.push({
             name: group.title,
-            releases: fetchedReleases.releases,
+            releases: response.releases,
+            releaseDate: group["first-release-date"],
+          });
+        } catch (error) {
+          console.error("Error fetching releases:", error);
+        }
+      }
+
+      const sortedAlbums = releasesData.sort((a, b) => {
+        return (
+          new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime()
+        );
+      });
+
+      const uniqueTrackCountReleases = sortedAlbums.map((releaseData) => {
+        const filtered = releaseData.releases.filter(
+          (release, index, self) =>
+            self.findIndex(
+              (r) =>
+                r.media[0]["track-count"] === release.media[0]["track-count"]
+            ) === index
+        );
+        return {
+          name: releaseData.name,
+          releases: filtered,
+          releaseDate: releaseData.releaseDate,
+        };
+      });
+
+      const sortedTrackCountReleases = uniqueTrackCountReleases.map(
+        (releaseData) => {
+          return {
+            name: releaseData.name,
+            releases: releaseData.releases.sort(
+              (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
+            ),
+            releaseDate: releaseData.releaseDate,
           };
-        })
+        }
       );
 
-      setReleaseGroupsReleases(releasesData);
+      setReleaseGroupsReleases(sortedTrackCountReleases);
     };
 
     if (selectedTab === "artist" && artistId) {
@@ -171,21 +213,14 @@ const Form = () => {
   }, [artistId, selectedTab]);
 
   useEffect(() => {
-    const getReleaseGroups = async () => {
-      const fetchedReleaseGroups = await fetchArtistReleaseGroups(artistId);
-      setReleaseGroups(fetchedReleaseGroups);
+    async function getReleases() {
+      const fetchedReleases = await fetchReleases(albumId);
+      setReleases(fetchedReleases.releases);
     }
-
-    if (selectedTab === "artist" && artistId) {
-      getReleaseGroups();
+    if (albumId && selectedTab === "album") {
+      getReleases();
     }
-  }, [artistId, selectedTab]);
-
-  if (releaseGroups) {
-    releaseGroups.forEach(async (group) => {
-      const fetchedReleases = await fetchReleases(group.id);
-    });
-  }
+  }, [albumId, selectedTab]);
 
   const sortedAlbums = albumList.items.sort((a, b) => {
     return (
@@ -292,7 +327,7 @@ const Form = () => {
                     if (formik.values.album && formik.values.artist) {
                       onOpen();
                     }
-                    if (uniqueTrackCountReleases.length == 1) {
+                    if (uniqueTrackCountReleases.length === 1) {
                       setSelectedRelease(uniqueTrackCountReleases[0].id);
                       setSubmitted(true);
                     }
@@ -384,7 +419,14 @@ const Form = () => {
                     </AutocompleteItem>
                   ))}
                 </Autocomplete>
-                <FormButton onPress={() => formik.unregisterField("album")}>
+                <FormButton
+                  onPress={() => {
+                    if (formik.values.artist) {
+                      onOpen();
+                    }
+                    formik.unregisterField("album");
+                  }}
+                >
                   Go!
                 </FormButton>
                 <Modal
@@ -392,14 +434,46 @@ const Form = () => {
                   onOpenChange={onOpenChange}
                   isDismissable={false}
                   isKeyboardDismissDisabled={true}
+                  size="lg" // Adjust the size as needed (sm, md, lg, full)
                 >
-                  <ModalContent>
+                  <ModalContent
+                    style={{ maxHeight: "80vh", overflowY: "auto" }}
+                  >
                     {(onClose: any) => (
                       <>
-                        <ModalHeader className="flex flex-col gap-1">
-                          Select the Releases
+                        <ModalHeader
+                          className="flex flex-col gap-1"
+                          style={{ marginBottom: "10px", padding: "10px" }}
+                        >
                         </ModalHeader>
-                        <ModalBody></ModalBody>
+                        <ModalBody style={{ padding: "10px" }}>
+                          {releaseGroupsReleases.map((releaseGroup) => (
+                            <div
+                              key={releaseGroup.name}
+                              style={{ marginBottom: "20px" }}
+                            >
+                              <hr />
+                              <h1 style={{fontSize: "30px"}}>{releaseGroup.name}</h1>
+                              <hr />
+                              <RadioGroup
+                                value={selectedReleases}
+                                onValueChange={setSelectedReleases}
+                                key={releaseGroup.name}
+                                style={{ padding: "10px 0" }} // Add padding to RadioGroup
+                              >
+                                {releaseGroup.releases.map((release) => (
+                                  <Radio value={release.id} key={release.id}>
+                                    {release.title}
+                                    {release.disambiguation
+                                      ? ` (${release.disambiguation}, `
+                                      : " ("}
+                                    {`${release.media[0]["track-count"]} Tracks`}
+                                  </Radio>
+                                ))}
+                              </RadioGroup>
+                            </div>
+                          ))}
+                        </ModalBody>
                       </>
                     )}
                   </ModalContent>
