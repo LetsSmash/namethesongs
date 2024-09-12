@@ -29,7 +29,6 @@ import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
 import { availableSecondaryTypes } from "@/types/consts";
 import { fetchArtistReleaseGroups, fetchReleases } from "../utils";
 import { Release } from "@/types/release";
-import { set } from "lodash";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
@@ -42,13 +41,18 @@ const Form = () => {
   const [albumId, setAlbumId] = useState("");
   const [releases, setReleases] = useState<Release[]>([]);
   const [releaseGroups, setReleaseGroups] = useState<Group[]>([]);
-  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState([]);
+  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<ReleaseGroup[]>([]);
   const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
   const [selectedTab, setSelectedTab] = useState<Key>("album");
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   const router = useRouter();
+
+  interface ReleaseGroup {
+    name: string;
+    releases: Release[];
+  }
 
   const formik = useFormik({
     initialValues: {
@@ -141,15 +145,30 @@ const Form = () => {
   }, [artistId]);
 
   useEffect(() => {
-    const getReleases = async () => {
-      const fetchedReleases = await fetchReleases(albumId);
-      setReleases(fetchedReleases.releases);
+    const getReleaseGroups = async () => {
+      await sleep(1000);
+      const fetchedReleaseGroups = await fetchArtistReleaseGroups(artistId);
+      setReleaseGroups(fetchedReleaseGroups);
+
+      // Fetch releases for each release group and populate releaseGroupsReleases array
+      const releasesData = await Promise.all(
+        fetchedReleaseGroups.map(async (group) => {
+          await sleep(1000);
+          const fetchedReleases = await fetchReleases(group.id);
+          return {
+            name: group.title,
+            releases: fetchedReleases.releases,
+          };
+        })
+      );
+
+      setReleaseGroupsReleases(releasesData);
     };
 
-    if (selectedTab === "album" && albumId) {
-      getReleases();
+    if (selectedTab === "artist" && artistId) {
+      getReleaseGroups();
     }
-  }, [albumId, selectedTab]);
+  }, [artistId, selectedTab]);
 
   useEffect(() => {
     const getReleaseGroups = async () => {
