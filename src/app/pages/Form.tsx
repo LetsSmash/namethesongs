@@ -18,6 +18,7 @@ import {
   useDisclosure,
   Tab,
   Tabs,
+  Spinner,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
@@ -434,7 +435,8 @@ const Form = () => {
                   onOpenChange={onOpenChange}
                   isDismissable={false}
                   isKeyboardDismissDisabled={true}
-                  size="lg" // Adjust the size as needed (sm, md, lg, full)
+                  size="lg"
+                  onClose={() => {setReleaseGroupsReleases([])}}
                 >
                   <ModalContent
                     style={{ maxHeight: "80vh", overflowY: "auto" }}
@@ -444,16 +446,23 @@ const Form = () => {
                         <ModalHeader
                           className="flex flex-col gap-1"
                           style={{ marginBottom: "10px", padding: "10px" }}
-                        >
-                        </ModalHeader>
+                        ></ModalHeader>
                         <ModalBody style={{ padding: "10px" }}>
+                          {releaseGroupsReleases.length === 0 && <Spinner />}
                           {releaseGroupsReleases.map((releaseGroup) => (
                             <div
                               key={releaseGroup.name}
                               style={{ marginBottom: "20px" }}
                             >
                               <hr />
-                              <h1 style={{fontSize: "30px"}}>{releaseGroup.name}</h1>
+                              <h1 style={{ fontSize: "30px" }}>
+                                {releaseGroup.name}
+                                {" ("}
+                                {releaseGroup.releaseDate
+                                  ? releaseGroup.releaseDate.substring(0, 4)
+                                  : "No Year available"}
+                                {")"}
+                              </h1>
                               <hr />
                               <RadioGroup
                                 value={selectedReleases}
@@ -467,7 +476,7 @@ const Form = () => {
                                     {release.disambiguation
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
-                                    {`${release.media[0]["track-count"]} Tracks`}
+                                    {`${release.media[0]["track-count"]} Tracks)`}
                                   </Radio>
                                 ))}
                               </RadioGroup>
