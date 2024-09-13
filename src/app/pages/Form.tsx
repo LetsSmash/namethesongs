@@ -19,6 +19,7 @@ import {
   Tab,
   Tabs,
   Spinner,
+  Checkbox,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
@@ -46,7 +47,7 @@ const Form = () => {
     ReleaseGroup[]
   >([]);
   const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
-  const [selectedReleases, setSelectedReleases] = useState<Release["id"]>("");
+  const [selectedReleases, setSelectedReleases] = useState<string[]>([]);
   const [selectedTab, setSelectedTab] = useState<Key>("album");
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -214,6 +215,14 @@ const Form = () => {
   }, [artistId, selectedTab]);
 
   useEffect(() => {
+    const initialSelectedReleases = releaseGroupsReleases.map((releaseGroup) => {
+      // If there is only one release, automatically select it
+      return releaseGroup.releases.length === 1 ? releaseGroup.releases[0].id : "";
+    });
+    setSelectedReleases(initialSelectedReleases);
+  }, [releaseGroupsReleases]);
+
+  useEffect(() => {
     async function getReleases() {
       const fetchedReleases = await fetchReleases(albumId);
       setReleases(fetchedReleases.releases);
@@ -240,6 +249,12 @@ const Form = () => {
   const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
     (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
   );
+
+  const handleRadioChange = (index: number, value: string) => {
+    const newSelectedReleases = [...selectedReleases]; // Create a copy of the state array
+    newSelectedReleases[index] = value; // Update the selected value for the specific RadioGroup
+    setSelectedReleases(newSelectedReleases); // Update the state with the new array
+  };
 
   return (
     <FormBackground>
@@ -448,8 +463,8 @@ const Form = () => {
                           style={{ marginBottom: "10px", padding: "10px" }}
                         ></ModalHeader>
                         <ModalBody style={{ padding: "10px" }}>
-                          {releaseGroupsReleases.length === 0 && <Spinner />}
-                          {releaseGroupsReleases.map((releaseGroup) => (
+                          {releaseGroupsReleases.length === 0 && <Spinner style={{marginBottom: 20}} />}
+                          {releaseGroupsReleases.map((releaseGroup, index) => (
                             <div
                               key={releaseGroup.name}
                               style={{ marginBottom: "20px" }}
@@ -465,10 +480,10 @@ const Form = () => {
                               </h1>
                               <hr />
                               <RadioGroup
-                                value={selectedReleases}
-                                onValueChange={setSelectedReleases}
+                                value={selectedReleases[index]}
+                                onValueChange={(value) => handleRadioChange(index, value)}
                                 key={releaseGroup.name}
-                                style={{ padding: "10px 0" }} // Add padding to RadioGroup
+                                style={{ padding: "10px 0" }}
                               >
                                 {releaseGroup.releases.map((release) => (
                                   <Radio value={release.id} key={release.id}>
