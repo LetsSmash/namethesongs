@@ -20,6 +20,7 @@ import {
   Tabs,
   Spinner,
   Checkbox,
+  CheckboxGroup,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
@@ -48,6 +49,7 @@ const Form = () => {
   >([]);
   const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
   const [selectedReleases, setSelectedReleases] = useState<string[]>([]);
+  const [selectedReleaseGroups, setSelectedReleaseGroups] = useState<Group["id"][]>([])
   const [selectedTab, setSelectedTab] = useState<Key>("album");
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -55,6 +57,7 @@ const Form = () => {
   const router = useRouter();
 
   interface ReleaseGroup {
+    id: Group["id"];
     name: string;
     releases: Release[];
     releaseDate: string;
@@ -159,11 +162,14 @@ const Form = () => {
 
       const releasesData: ReleaseGroup[] = [];
 
+      // Yes, everything that follows is stupid, cause i already have the ReleaseGroups. 
+      // BUT: The releases inside the ReleaseGroups doesn't have any Media Information. If anyone ever sees this, please help me improve this lol
       for (const group of fetchedReleaseGroups) {
         await sleep(1000);
         try {
           const response = await fetchReleases(group.id);
           releasesData.push({
+            id: group.id,
             name: group.title,
             releases: response.releases,
             releaseDate: group["first-release-date"],
@@ -188,6 +194,7 @@ const Form = () => {
             ) === index
         );
         return {
+          id: releaseData.id,
           name: releaseData.name,
           releases: filtered,
           releaseDate: releaseData.releaseDate,
@@ -197,6 +204,7 @@ const Form = () => {
       const sortedTrackCountReleases = uniqueTrackCountReleases.map(
         (releaseData) => {
           return {
+            id: releaseData.id,
             name: releaseData.name,
             releases: releaseData.releases.sort(
               (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
@@ -207,6 +215,7 @@ const Form = () => {
       );
 
       setReleaseGroupsReleases(sortedTrackCountReleases);
+      setSelectedReleaseGroups(releasesData.map(rd => {return rd.id}))
     };
 
     if (selectedTab === "artist" && artistId) {
@@ -215,10 +224,14 @@ const Form = () => {
   }, [artistId, selectedTab]);
 
   useEffect(() => {
-    const initialSelectedReleases = releaseGroupsReleases.map((releaseGroup) => {
-      // If there is only one release, automatically select it
-      return releaseGroup.releases.length === 1 ? releaseGroup.releases[0].id : "";
-    });
+    const initialSelectedReleases = releaseGroupsReleases.map(
+      (releaseGroup) => {
+        // If there is only one release, automatically select it
+        return releaseGroup.releases.length === 1
+          ? releaseGroup.releases[0].id
+          : "";
+      }
+    );
     setSelectedReleases(initialSelectedReleases);
   }, [releaseGroupsReleases]);
 
@@ -450,8 +463,10 @@ const Form = () => {
                   onOpenChange={onOpenChange}
                   isDismissable={false}
                   isKeyboardDismissDisabled={true}
-                  size="lg"
-                  onClose={() => {setReleaseGroupsReleases([])}}
+                  size="xl"
+                  onClose={() => {
+                    setReleaseGroupsReleases([]);
+                  }}
                 >
                   <ModalContent
                     style={{ maxHeight: "80vh", overflowY: "auto" }}
@@ -463,7 +478,12 @@ const Form = () => {
                           style={{ marginBottom: "10px", padding: "10px" }}
                         ></ModalHeader>
                         <ModalBody style={{ padding: "10px" }}>
-                          {releaseGroupsReleases.length === 0 && <Spinner style={{marginBottom: 20}} />}
+                          {releaseGroupsReleases.length === 0 && (
+                            <Spinner style={{ marginBottom: 20 }} />
+                          )}
+                          <CheckboxGroup
+                          value={selectedReleaseGroups}
+                          onValueChange={setSelectedReleaseGroups}>
                           {releaseGroupsReleases.map((releaseGroup, index) => (
                             <div
                               key={releaseGroup.name}
@@ -477,11 +497,17 @@ const Form = () => {
                                   ? releaseGroup.releaseDate.substring(0, 4)
                                   : "No Year available"}
                                 {")"}
+                                <Checkbox value={releaseGroup.id} style={{marginLeft: 5}}/>
                               </h1>
                               <hr />
+                              {selectedReleaseGroups.includes(
+                                releaseGroup.id
+                              ) && (
                               <RadioGroup
                                 value={selectedReleases[index]}
-                                onValueChange={(value) => handleRadioChange(index, value)}
+                                onValueChange={(value) =>
+                                  handleRadioChange(index, value)
+                                }
                                 key={releaseGroup.name}
                                 style={{ padding: "10px 0" }}
                               >
@@ -495,8 +521,10 @@ const Form = () => {
                                   </Radio>
                                 ))}
                               </RadioGroup>
+                              )}
                             </div>
                           ))}
+                          </CheckboxGroup>
                         </ModalBody>
                       </>
                     )}
