@@ -18,9 +18,10 @@ import {
   useDisclosure,
   Tab,
   Tabs,
-  Spinner,
+  CircularProgress,
   Checkbox,
   CheckboxGroup,
+  Progress,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
@@ -30,8 +31,8 @@ import FormButton from "@/app/components/FormButton";
 import { Artist, ArtistRoot } from "@/types/artist";
 import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
 import { availableSecondaryTypes } from "@/types/consts";
-import { fetchArtistReleaseGroups, fetchReleases } from "../utils";
-import { Release } from "@/types/release";
+import { fetchArtistReleaseGroups } from "../utils";
+import { Release, ReleaseRoot } from "@/types/release";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
@@ -53,6 +54,7 @@ const Form = () => {
     Group["id"][]
   >([]);
   const [selectedTab, setSelectedTab] = useState<Key>("album");
+  const [loadingTime, setLoadingTime] = useState(0);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -89,7 +91,7 @@ const Form = () => {
         router.push(`/game/artist/${artistId}`);
       }
     }
-  }, [submitted, selectedRelease, router, selectedTab]);
+  }, [submitted, selectedRelease, router, artistId, selectedTab]);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -170,20 +172,26 @@ const Form = () => {
       // Yes, everything that follows is stupid, cause i already have the ReleaseGroups.
       // BUT: The releases inside the ReleaseGroups doesn't have any Media Information. If anyone ever sees this, please help me improve this lol
       for (const group of fetchedReleaseGroups) {
-        await sleep(1000);
+        await sleep(50)
         try {
-          const response = await fetchReleases(group.id);
+          const { data } = await axios.get<ReleaseRoot>(
+            `api/getReleases/${group.id}`
+          );
           releasesData.push({
             id: group.id,
             name: group.title,
             type: group["primary-type"],
             secondary: group["secondary-types"],
-            releases: response.releases,
+            releases: data.releases,
             releaseDate: group["first-release-date"],
           });
         } catch (error) {
           console.error("Error fetching releases:", error);
         }
+        setLoadingTime((e) => e + 1);
+      }
+      if (loadingTime === fetchedReleaseGroups.length){
+        setLoadingTime(0);
       }
 
       const sortedAlbums = releasesData.sort((a, b) => {
@@ -252,13 +260,19 @@ const Form = () => {
 
   useEffect(() => {
     async function getReleases() {
-      const fetchedReleases = await fetchReleases(albumId);
-      setReleases(fetchedReleases.releases);
+      const { data } = await axios.get(`api/getReleases/${albumId}`);
+      setReleases(data);
     }
     if (albumId && selectedTab === "album") {
       getReleases();
     }
   }, [albumId, selectedTab]);
+
+  useEffect(() => {
+    if (selectedReleases) {
+      window.localStorage.setItem("releases", JSON.stringify(selectedReleases));
+    }
+  }, [selectedReleases]);
 
   const sortedAlbums = albumList.items.sort((a, b) => {
     return (
@@ -504,7 +518,14 @@ const Form = () => {
                         ></ModalHeader>
                         <ModalBody style={{ padding: "10px" }}>
                           {releaseGroupsReleases.length === 0 && (
-                            <Spinner style={{ marginBottom: 20 }} />
+                            <Progress
+                              valueLabel={`${loadingTime} / ${releaseGroups.length}`}
+                              aria-label="Loading..."
+                              value={loadingTime}
+                              showValueLabel={true}
+                              maxValue={releaseGroups.length}
+                              formatOptions={{ style: "decimal" }}
+                            />
                           )}
                           <CheckboxGroup
                             value={selectedReleaseGroups}
@@ -543,7 +564,7 @@ const Form = () => {
                                       onValueChange={(value) =>
                                         handleRadioChange(index, value)
                                       }
-                                      key={releaseGroup.name}
+                                      key={releaseGroup.id}
                                       style={{ padding: "10px 0" }}
                                     >
                                       {releaseGroup.releases.map((release) => (
