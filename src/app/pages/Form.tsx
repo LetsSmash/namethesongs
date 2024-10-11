@@ -274,6 +274,12 @@ const Form = () => {
     }
   }, [selectedReleases]);
 
+  useEffect(() => {
+    if(!artistId){
+      setReleaseGroupsReleases([])
+    }
+  }, [artistId])
+
   const sortedAlbums = albumList.items.sort((a, b) => {
     return (
       new Date(a["first-release-date"]).getTime() -
@@ -503,9 +509,6 @@ const Form = () => {
                   isDismissable={false}
                   isKeyboardDismissDisabled={true}
                   size="xl"
-                  onClose={() => {
-                    setReleaseGroupsReleases([]);
-                  }}
                 >
                   <ModalContent
                     style={{ maxHeight: "80vh", overflowY: "auto" }}
