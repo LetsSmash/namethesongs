@@ -260,8 +260,8 @@ const Form = () => {
 
   useEffect(() => {
     async function getReleases() {
-      const { data } = await axios.get(`api/getReleases/${albumId}`);
-      setReleases(data);
+      const { data } = await axios.get<ReleaseRoot>(`api/getReleases/${albumId}`);
+      setReleases(data.releases);
     }
     if (albumId && selectedTab === "album") {
       getReleases();
@@ -281,22 +281,22 @@ const Form = () => {
   }, [artistId])
 
   const sortedAlbums = albumList.items.sort((a, b) => {
-    return (
-      new Date(a["first-release-date"]).getTime() -
-      new Date(b["first-release-date"]).getTime()
-    );
-  });
+      return (
+        new Date(a["first-release-date"]).getTime() -
+        new Date(b["first-release-date"]).getTime()
+      );
+    });
 
   const uniqueTrackCountReleases = releases.filter(
-    (release, index, self) =>
-      self.findIndex(
-        (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
-      ) === index
-  );
-
+      (release, index, self) =>
+        self.findIndex(
+          (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
+        ) === index
+    );
+  
   const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
-    (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
-  );
+      (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
+    );
 
   const handleRadioChange = (index: number, value: string) => {
     const newSelectedReleases = [...selectedReleases]; // Create a copy of the state array
@@ -505,6 +505,7 @@ const Form = () => {
                 </FormButton>
                 <Modal
                   isOpen={isOpen}
+                  placement="top-center"
                   onOpenChange={onOpenChange}
                   isDismissable={false}
                   isKeyboardDismissDisabled={true}

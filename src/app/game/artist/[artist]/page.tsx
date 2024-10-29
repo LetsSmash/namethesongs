@@ -22,7 +22,7 @@ interface Params {
 
 export default function Page({ params }: { params: Params }) {
   return (
-    <FormBackground>
+    <FormBackground additionalClasses="gap-4 max-w-7xl mx-auto auto-cols-max">
       <MainGameArtist artist={params.artist}/>
     </FormBackground>
   );

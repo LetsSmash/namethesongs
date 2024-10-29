@@ -165,7 +165,7 @@ const MainGame = (props: { album: string }) => {
           />
           <button
             onClick={stopCountdown}
-            className="hover:underline hover:cursor-pointer"
+            className="hover:underline hover:cursor-pointer text-left"
           >
             Give Up
           </button>

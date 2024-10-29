@@ -1,6 +1,7 @@
 import { availableSecondaryTypes } from "@/types/consts";
 import {Release, ReleaseRoot} from "@/types/release";
 import {Group, ReleaseGroupRoot} from "@/types/releasegroup";
+import { TracklistRoot } from "@/types/tracklist";
 import axios from "axios";
 
 export const fetchAlbumInfos = async (id: string) => {
@@ -57,3 +58,21 @@ export const fetchArtistReleaseGroups = async (id: string) => {
     throw error;
   }
 };
+
+export const fetchReleaseInfos = async (id: string) => {
+  try {
+    const { data } = await axios.get<TracklistRoot>(
+      `https://musicbrainz.org/ws/2/release/${id}`,
+      {
+        params: {
+          inc: "recordings+artist-credits",
+          fmt: "json",
+        },
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error("Error fetching release info:", error);
+    throw error;
+  }
+}
