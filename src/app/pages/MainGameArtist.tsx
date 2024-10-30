@@ -52,7 +52,7 @@ const MainGameArtist = (props: { artist: string }) => {
               <ul className="divide-y divide-gray-400">
                 {release.media[0].tracks.map((track: Track) => (
                   <li key={track.id} className="p-2 text-center">
-                    <span>{track.title}</span>
+                    <span className="invisible">{track.title}</span>
                   </li>
                 ))}
               </ul>
