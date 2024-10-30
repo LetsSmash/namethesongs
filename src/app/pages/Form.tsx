@@ -172,7 +172,7 @@ const Form = () => {
       // Yes, everything that follows is stupid, cause i already have the ReleaseGroups.
       // BUT: The releases inside the ReleaseGroups doesn't have any Media Information. If anyone ever sees this, please help me improve this lol
       for (const group of fetchedReleaseGroups) {
-        await sleep(50)
+        await sleep(50);
         try {
           const { data } = await axios.get<ReleaseRoot>(
             `api/getReleases/${group.id}`
@@ -190,7 +190,7 @@ const Form = () => {
         }
         setLoadingTime((e) => e + 1);
       }
-      if (loadingTime === fetchedReleaseGroups.length){
+      if (loadingTime === fetchedReleaseGroups.length) {
         setLoadingTime(0);
       }
 
@@ -260,7 +260,9 @@ const Form = () => {
 
   useEffect(() => {
     async function getReleases() {
-      const { data } = await axios.get<ReleaseRoot>(`api/getReleases/${albumId}`);
+      const { data } = await axios.get<ReleaseRoot>(
+        `api/getReleases/${albumId}`
+      );
       setReleases(data.releases);
     }
     if (albumId && selectedTab === "album") {
@@ -275,28 +277,28 @@ const Form = () => {
   }, [selectedReleases]);
 
   useEffect(() => {
-    if(!artistId){
-      setReleaseGroupsReleases([])
+    if (!artistId) {
+      setReleaseGroupsReleases([]);
     }
-  }, [artistId])
+  }, [artistId]);
 
   const sortedAlbums = albumList.items.sort((a, b) => {
-      return (
-        new Date(a["first-release-date"]).getTime() -
-        new Date(b["first-release-date"]).getTime()
-      );
-    });
+    return (
+      new Date(a["first-release-date"]).getTime() -
+      new Date(b["first-release-date"]).getTime()
+    );
+  });
 
   const uniqueTrackCountReleases = releases.filter(
-      (release, index, self) =>
-        self.findIndex(
-          (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
-        ) === index
-    );
-  
+    (release, index, self) =>
+      self.findIndex(
+        (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
+      ) === index
+  );
+
   const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
-      (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
-    );
+    (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
+  );
 
   const handleRadioChange = (index: number, value: string) => {
     const newSelectedReleases = [...selectedReleases]; // Create a copy of the state array
@@ -315,308 +317,315 @@ const Form = () => {
   };
 
   return (
-    <FormBackground>
-      {!submitted && (
-        <>
-          <form
-            className="block text-sm font-medium leading-6 text-gray-900"
-            onSubmit={formik.handleSubmit}
-          >
-            <Tabs
-              className="grid mb-3"
-              onSelectionChange={(key) => setSelectedTab(key)}
+    <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <FormBackground>
+        {!submitted && (
+          <>
+            <form
+              className="block text-sm font-medium leading-6 text-gray-900"
+              onSubmit={formik.handleSubmit}
             >
-              <Tab key="album" title="Album">
-                <Autocomplete
-                  id="artist"
-                  name="artist"
-                  items={list.items}
-                  value={formik.values.artist}
-                  inputValue={list.filterText}
-                  onInputChange={(value: string) => {
-                    formik.setFieldValue("artist", value);
-                    list.setFilterText(value);
-                  }}
-                  onKeyDown={(e: any) => e.continuePropagation()}
-                  isLoading={list.isLoading}
-                  className="mb-4"
-                  label="Enter an Artist"
-                  onSelectionChange={(key) => {
-                    if (key) {
-                      setArtistId(key.toString());
-                    }
-                  }}
-                >
-                  {list.items.map((item) => (
-                    <AutocompleteItem key={item.id} textValue={item.name}>
-                      {item.name}{" "}
-                      {item.disambiguation ? `(${item.disambiguation})` : ""}
-                    </AutocompleteItem>
-                  ))}
-                </Autocomplete>
-                <Autocomplete
-                  id="album"
-                  name="album"
-                  defaultItems={albumList.items}
-                  value={formik.values.album}
-                  inputValue={albumList.filterText}
-                  onInputChange={(value: string) => {
-                    formik.setFieldValue("album", value);
-                    albumList.setFilterText(value);
-                  }}
-                  onKeyDown={(e: any) => e.continuePropagation()}
-                  label="Enter an Album or an EP by that Artist"
-                  onSelectionChange={(key) => {
-                    if (key) {
-                      setAlbumId(key.toString());
-                    }
-                  }}
-                >
-                  {sortedAlbums.map((item) => (
-                    <AutocompleteItem key={item.id} textValue={item.title}>
-                      {item.title} (
-                      {item["secondary-types"]
-                        ? item["secondary-types"][0]
-                        : item["primary-type"]}
-                      ,{" "}
-                      {item["first-release-date"]
-                        ? item["first-release-date"].substring(0, 4)
-                        : "Date unavailable"}
-                      )
-                    </AutocompleteItem>
-                  ))}
-                </Autocomplete>
-                {formik.touched.album && formik.errors.album ? (
-                  <div className="text-red-500 text-xs">
-                    {formik.errors.album}
-                  </div>
-                ) : null}
-                {formik.touched.artist && formik.errors.artist ? (
-                  <div className="text-red-500 text-xs">
-                    {formik.errors.artist}
-                  </div>
-                ) : null}
-                <FormButton
-                  onPress={() => {
-                    if (formik.values.album && formik.values.artist) {
-                      onOpen();
-                    }
-                    if (uniqueTrackCountReleases.length === 1) {
-                      setSelectedRelease(uniqueTrackCountReleases[0].id);
-                      setSubmitted(true);
-                    }
-                  }}
-                >
-                  Go!
-                </FormButton>
-                <Modal
-                  isOpen={isOpen}
-                  onOpenChange={onOpenChange}
-                  isDismissable={false}
-                  isKeyboardDismissDisabled={true}
-                >
-                  <ModalContent>
-                    {(onClose: any) => (
-                      <>
-                        <ModalHeader className="flex flex-col gap-1">
-                          Select a Release
-                        </ModalHeader>
-                        <ModalBody>
-                          <RadioGroup
-                            value={selectedRelease}
-                            onValueChange={setSelectedRelease}
-                          >
-                            {Array.isArray(sortedTrackCountReleases) &&
-                            sortedTrackCountReleases.length > 0 ? (
-                              sortedTrackCountReleases.map((release) => (
-                                <Radio value={release.id} key={release.id}>
-                                  {release.title}
-                                  {release.disambiguation
-                                    ? ` (${release.disambiguation}, `
-                                    : " ("}
-                                  {`${release.media[0]["track-count"]} Tracks`}
-                                  {`, ${release["release-events"][0]?.date})` ||
-                                    ", No date available)"}
-                                </Radio>
-                              ))
-                            ) : (
-                              <p>No releases available</p>
-                            )}
-                          </RadioGroup>
-                        </ModalBody>
-                        <ModalFooter>
-                          <Button
-                            color="danger"
-                            variant="light"
-                            onPress={onClose}
-                          >
-                            Return to Form
-                          </Button>
-                          <Button
-                            color="primary"
-                            type="submit"
-                            onPress={() => setSubmitted(true)}
-                          >
-                            Select this Release
-                          </Button>
-                        </ModalFooter>
-                      </>
-                    )}
-                  </ModalContent>
-                </Modal>
-              </Tab>
-              <Tab key="artist" title="Artist">
-                <Autocomplete
-                  id="artist"
-                  name="artist"
-                  items={list.items}
-                  value={formik.values.artist}
-                  inputValue={list.filterText}
-                  onInputChange={(value: string) => {
-                    formik.setFieldValue("artist", value);
-                    list.setFilterText(value);
-                  }}
-                  onKeyDown={(e: any) => e.continuePropagation()}
-                  isLoading={list.isLoading}
-                  className="mb-4"
-                  label="Enter an Artist"
-                  onSelectionChange={(key) => {
-                    if (key) {
-                      setArtistId(key.toString());
-                    }
-                  }}
-                >
-                  {list.items.map((item) => (
-                    <AutocompleteItem key={item.id} textValue={item.name}>
-                      {item.name}{" "}
-                      {item.disambiguation ? `(${item.disambiguation})` : ""}
-                    </AutocompleteItem>
-                  ))}
-                </Autocomplete>
-                <FormButton
-                  onPress={() => {
-                    if (formik.values.artist) {
-                      onOpen();
-                    }
-                    formik.unregisterField("album");
-                  }}
-                >
-                  Go!
-                </FormButton>
-                <Modal
-                  isOpen={isOpen}
-                  placement="top-center"
-                  onOpenChange={onOpenChange}
-                  isDismissable={false}
-                  isKeyboardDismissDisabled={true}
-                  size="xl"
-                >
-                  <ModalContent
-                    style={{ maxHeight: "80vh", overflowY: "auto" }}
+              <Tabs
+                className="grid mb-3"
+                onSelectionChange={(key) => setSelectedTab(key)}
+              >
+                <Tab key="album" title="Album">
+                  <Autocomplete
+                    id="artist"
+                    name="artist"
+                    items={list.items}
+                    value={formik.values.artist}
+                    inputValue={list.filterText}
+                    onInputChange={(value: string) => {
+                      formik.setFieldValue("artist", value);
+                      list.setFilterText(value);
+                    }}
+                    onKeyDown={(e: any) => e.continuePropagation()}
+                    isLoading={list.isLoading}
+                    className="mb-4"
+                    label="Enter an Artist"
+                    onSelectionChange={(key) => {
+                      if (key) {
+                        setArtistId(key.toString());
+                      }
+                    }}
                   >
-                    {(onClose: any) => (
-                      <>
-                        <ModalHeader
-                          className="flex flex-col gap-1"
-                          style={{ marginBottom: "10px", padding: "10px" }}
-                        ></ModalHeader>
-                        <ModalBody style={{ padding: "10px" }}>
-                          {releaseGroupsReleases.length === 0 && (
-                            <Progress
-                              valueLabel={`${loadingTime} / ${releaseGroups.length}`}
-                              aria-label="Loading..."
-                              value={loadingTime}
-                              showValueLabel={true}
-                              maxValue={releaseGroups.length}
-                              formatOptions={{ style: "decimal" }}
-                            />
-                          )}
-                          <CheckboxGroup
-                            value={selectedReleaseGroups}
-                            onValueChange={handleCheckboxChange}
-                          >
-                            {releaseGroupsReleases.map(
-                              (releaseGroup, index) => (
-                                <div
-                                  key={releaseGroup.name}
-                                  style={{ marginBottom: "20px" }}
-                                >
-                                  <hr />
-                                  <h1 style={{ fontSize: "30px" }}>
-                                    {releaseGroup.name}
-                                    {" ("}
-                                    {releaseGroup.secondary?.[0]
-                                      ? releaseGroup.secondary[0] + "-"
-                                      : ""}
-                                    {releaseGroup.type}
-                                    {", "}
-                                    {releaseGroup.releaseDate
-                                      ? releaseGroup.releaseDate.substring(0, 4)
-                                      : "No Year available"}
-                                    {")"}
-                                    <Checkbox
-                                      value={releaseGroup.id}
-                                      style={{ marginLeft: 5 }}
-                                    />
-                                  </h1>
-                                  <hr />
-                                  {selectedReleaseGroups.includes(
-                                    releaseGroup.id
-                                  ) && (
-                                    <RadioGroup
-                                      value={selectedReleases[index]}
-                                      onValueChange={(value) =>
-                                        handleRadioChange(index, value)
-                                      }
-                                      key={releaseGroup.id}
-                                      style={{ padding: "10px 0" }}
-                                    >
-                                      {releaseGroup.releases.map((release) => (
-                                        <Radio
-                                          value={release.id}
-                                          key={release.id}
-                                        >
-                                          {release.title}
-                                          {release.disambiguation
-                                            ? ` (${release.disambiguation}, `
-                                            : " ("}
-                                          {`${release.media[0]["track-count"]} Tracks)`}
-                                        </Radio>
-                                      ))}
-                                    </RadioGroup>
-                                  )}
-                                </div>
-                              )
+                    {list.items.map((item) => (
+                      <AutocompleteItem key={item.id} textValue={item.name}>
+                        {item.name}{" "}
+                        {item.disambiguation ? `(${item.disambiguation})` : ""}
+                      </AutocompleteItem>
+                    ))}
+                  </Autocomplete>
+                  <Autocomplete
+                    id="album"
+                    name="album"
+                    defaultItems={albumList.items}
+                    value={formik.values.album}
+                    inputValue={albumList.filterText}
+                    onInputChange={(value: string) => {
+                      formik.setFieldValue("album", value);
+                      albumList.setFilterText(value);
+                    }}
+                    onKeyDown={(e: any) => e.continuePropagation()}
+                    label="Enter an Album or an EP by that Artist"
+                    onSelectionChange={(key) => {
+                      if (key) {
+                        setAlbumId(key.toString());
+                      }
+                    }}
+                  >
+                    {sortedAlbums.map((item) => (
+                      <AutocompleteItem key={item.id} textValue={item.title}>
+                        {item.title} (
+                        {item["secondary-types"]
+                          ? item["secondary-types"][0]
+                          : item["primary-type"]}
+                        ,{" "}
+                        {item["first-release-date"]
+                          ? item["first-release-date"].substring(0, 4)
+                          : "Date unavailable"}
+                        )
+                      </AutocompleteItem>
+                    ))}
+                  </Autocomplete>
+                  {formik.touched.album && formik.errors.album ? (
+                    <div className="text-red-500 text-xs">
+                      {formik.errors.album}
+                    </div>
+                  ) : null}
+                  {formik.touched.artist && formik.errors.artist ? (
+                    <div className="text-red-500 text-xs">
+                      {formik.errors.artist}
+                    </div>
+                  ) : null}
+                  <FormButton
+                    onPress={() => {
+                      if (formik.values.album && formik.values.artist) {
+                        onOpen();
+                      }
+                      if (uniqueTrackCountReleases.length === 1) {
+                        setSelectedRelease(uniqueTrackCountReleases[0].id);
+                        setSubmitted(true);
+                      }
+                    }}
+                  >
+                    Go!
+                  </FormButton>
+                  <Modal
+                    isOpen={isOpen}
+                    onOpenChange={onOpenChange}
+                    isDismissable={false}
+                    isKeyboardDismissDisabled={true}
+                  >
+                    <ModalContent>
+                      {(onClose: any) => (
+                        <>
+                          <ModalHeader className="flex flex-col gap-1">
+                            Select a Release
+                          </ModalHeader>
+                          <ModalBody>
+                            <RadioGroup
+                              value={selectedRelease}
+                              onValueChange={setSelectedRelease}
+                            >
+                              {Array.isArray(sortedTrackCountReleases) &&
+                              sortedTrackCountReleases.length > 0 ? (
+                                sortedTrackCountReleases.map((release) => (
+                                  <Radio value={release.id} key={release.id}>
+                                    {release.title}
+                                    {release.disambiguation
+                                      ? ` (${release.disambiguation}, `
+                                      : " ("}
+                                    {`${release.media[0]["track-count"]} Tracks`}
+                                    {`, ${release["release-events"][0]?.date})` ||
+                                      ", No date available)"}
+                                  </Radio>
+                                ))
+                              ) : (
+                                <p>No releases available</p>
+                              )}
+                            </RadioGroup>
+                          </ModalBody>
+                          <ModalFooter>
+                            <Button
+                              color="danger"
+                              variant="light"
+                              onPress={onClose}
+                            >
+                              Return to Form
+                            </Button>
+                            <Button
+                              color="primary"
+                              type="submit"
+                              onPress={() => setSubmitted(true)}
+                            >
+                              Select this Release
+                            </Button>
+                          </ModalFooter>
+                        </>
+                      )}
+                    </ModalContent>
+                  </Modal>
+                </Tab>
+                <Tab key="artist" title="Artist">
+                  <Autocomplete
+                    id="artist"
+                    name="artist"
+                    items={list.items}
+                    value={formik.values.artist}
+                    inputValue={list.filterText}
+                    onInputChange={(value: string) => {
+                      formik.setFieldValue("artist", value);
+                      list.setFilterText(value);
+                    }}
+                    onKeyDown={(e: any) => e.continuePropagation()}
+                    isLoading={list.isLoading}
+                    className="mb-4"
+                    label="Enter an Artist"
+                    onSelectionChange={(key) => {
+                      if (key) {
+                        setArtistId(key.toString());
+                      }
+                    }}
+                  >
+                    {list.items.map((item) => (
+                      <AutocompleteItem key={item.id} textValue={item.name}>
+                        {item.name}{" "}
+                        {item.disambiguation ? `(${item.disambiguation})` : ""}
+                      </AutocompleteItem>
+                    ))}
+                  </Autocomplete>
+                  <FormButton
+                    onPress={() => {
+                      if (formik.values.artist) {
+                        onOpen();
+                      }
+                      formik.unregisterField("album");
+                    }}
+                  >
+                    Go!
+                  </FormButton>
+                  <Modal
+                    isOpen={isOpen}
+                    placement="top-center"
+                    onOpenChange={onOpenChange}
+                    isDismissable={false}
+                    isKeyboardDismissDisabled={true}
+                    size="xl"
+                  >
+                    <ModalContent
+                      style={{ maxHeight: "80vh", overflowY: "auto" }}
+                    >
+                      {(onClose: any) => (
+                        <>
+                          <ModalHeader
+                            className="flex flex-col gap-1"
+                            style={{ marginBottom: "10px", padding: "10px" }}
+                          ></ModalHeader>
+                          <ModalBody style={{ padding: "10px" }}>
+                            {releaseGroupsReleases.length === 0 && (
+                              <Progress
+                                valueLabel={`${loadingTime} / ${releaseGroups.length}`}
+                                aria-label="Loading..."
+                                value={loadingTime}
+                                showValueLabel={true}
+                                maxValue={releaseGroups.length}
+                                formatOptions={{ style: "decimal" }}
+                              />
                             )}
-                          </CheckboxGroup>
-                        </ModalBody>
-                        <ModalFooter>
-                          <Button
-                            color="danger"
-                            variant="light"
-                            onPress={onClose}
-                          >
-                            Return to Form
-                          </Button>
-                          <Button
-                            color="primary"
-                            type="submit"
-                            onPress={() => setSubmitted(true)}
-                          >
-                            Start!
-                          </Button>
-                        </ModalFooter>
-                      </>
-                    )}
-                  </ModalContent>
-                </Modal>
-              </Tab>
-            </Tabs>
-          </form>
-        </>
-      )}
-      {submitted && <p>Loading...</p>}
-    </FormBackground>
+                            <CheckboxGroup
+                              value={selectedReleaseGroups}
+                              onValueChange={handleCheckboxChange}
+                            >
+                              {releaseGroupsReleases.map(
+                                (releaseGroup, index) => (
+                                  <div
+                                    key={releaseGroup.name}
+                                    style={{ marginBottom: "20px" }}
+                                  >
+                                    <hr />
+                                    <h1 style={{ fontSize: "30px" }}>
+                                      {releaseGroup.name}
+                                      {" ("}
+                                      {releaseGroup.secondary?.[0]
+                                        ? releaseGroup.secondary[0] + "-"
+                                        : ""}
+                                      {releaseGroup.type}
+                                      {", "}
+                                      {releaseGroup.releaseDate
+                                        ? releaseGroup.releaseDate.substring(
+                                            0,
+                                            4
+                                          )
+                                        : "No Year available"}
+                                      {")"}
+                                      <Checkbox
+                                        value={releaseGroup.id}
+                                        style={{ marginLeft: 5 }}
+                                      />
+                                    </h1>
+                                    <hr />
+                                    {selectedReleaseGroups.includes(
+                                      releaseGroup.id
+                                    ) && (
+                                      <RadioGroup
+                                        value={selectedReleases[index]}
+                                        onValueChange={(value) =>
+                                          handleRadioChange(index, value)
+                                        }
+                                        key={releaseGroup.id}
+                                        style={{ padding: "10px 0" }}
+                                      >
+                                        {releaseGroup.releases.map(
+                                          (release) => (
+                                            <Radio
+                                              value={release.id}
+                                              key={release.id}
+                                            >
+                                              {release.title}
+                                              {release.disambiguation
+                                                ? ` (${release.disambiguation}, `
+                                                : " ("}
+                                              {`${release.media[0]["track-count"]} Tracks)`}
+                                            </Radio>
+                                          )
+                                        )}
+                                      </RadioGroup>
+                                    )}
+                                  </div>
+                                )
+                              )}
+                            </CheckboxGroup>
+                          </ModalBody>
+                          <ModalFooter>
+                            <Button
+                              color="danger"
+                              variant="light"
+                              onPress={onClose}
+                            >
+                              Return to Form
+                            </Button>
+                            <Button
+                              color="primary"
+                              type="submit"
+                              onPress={() => setSubmitted(true)}
+                            >
+                              Start!
+                            </Button>
+                          </ModalFooter>
+                        </>
+                      )}
+                    </ModalContent>
+                  </Modal>
+                </Tab>
+              </Tabs>
+            </form>
+          </>
+        )}
+        {submitted && <p>Loading...</p>}
+      </FormBackground>
+    </div>
   );
 };
 

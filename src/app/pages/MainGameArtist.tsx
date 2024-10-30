@@ -22,8 +22,8 @@ const MainGameArtist = (props: { artist: string }) => {
       releaseIDs.map(async (id: string) => {
         try {
           if (id) {
-          const data = await fetchReleaseInfos(id);
-          setReleases((prevReleases) => [...prevReleases, data]);
+            const data = await fetchReleaseInfos(id); 
+            setReleases((prevReleases) => [...prevReleases, data]);
           }
         } catch (error) {
           console.error("Error fetching album info:", error);
@@ -31,29 +31,37 @@ const MainGameArtist = (props: { artist: string }) => {
       });
     }
   }, [releaseIDs]);
+  const sortedAlbums = releases.sort((a, b) => {
+    return (
+      new Date(a.date).getTime() - 
+      new Date(b.date).getTime()
+    )
+  })
   return (
     <>
-      {releases.map((release) => (
-        <Card key={release.id} className="p-3">
-          <div>
-            <CardHeader className="justify-center">
-              <h1 className="text-center font-bold text-2xl">{release.title}</h1>
-            </CardHeader>
-            <Divider />
-            <ul className="divide-y divide-gray-400">
-              {release.media[0].tracks.map((track: Track) => (
-                <li key={track.id} className="p-2 text-center">
-                  <span>
-                    {track.title}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Card>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {sortedAlbums.map((release) => (
+          <Card key={release.id} className="p-3 h-min">
+            <div>
+              <CardHeader className="justify-center">
+                <h1 className="text-center font-bold text-2xl">
+                  {release.title}
+                </h1>
+              </CardHeader>
+              <Divider />
+              <ul className="divide-y divide-gray-400">
+                {release.media[0].tracks.map((track: Track) => (
+                  <li key={track.id} className="p-2 text-center">
+                    <span>{track.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+        ))}
+      </div>
     </>
   );
-}
+};
 
 export default MainGameArtist;
