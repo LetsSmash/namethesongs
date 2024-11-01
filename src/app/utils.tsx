@@ -65,7 +65,7 @@ export const fetchReleaseInfos = async (id: string) => {
       `https://musicbrainz.org/ws/2/release/${id}`,
       {
         params: {
-          inc: "recordings+artist-credits",
+          inc: "recordings+release-groups",
           fmt: "json",
         },
       }
@@ -76,3 +76,21 @@ export const fetchReleaseInfos = async (id: string) => {
     throw error;
   }
 }
+
+export const normalizeString = (str: string) => {
+  return str
+    .replace(/’/g, "'")
+    .replace(/Ä/g, "A")
+    .replace(/ä/g, "a")
+    .replace(/Ö/g, "O")
+    .replace(/ö/g, "o")
+    .replace(/Ü/g, "U")
+    .replace(/ü/g, "u")
+    .replace(/&/g, "and")
+    .replace(/and/g, "&")
+    .replace(
+      /[^a-zA-Z0-9\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Cyrillic}]/gu,
+      ""
+    )
+    .toLowerCase();
+};
