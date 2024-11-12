@@ -46,9 +46,9 @@ const MainGame = (props: { album: string }) => {
     const albumInfos = await fetchAlbumInfos(data["release-group"].id)
     setAlbumName(albumInfos.title)
     setArtistName(albumInfos["artist-credit"][0].name)
-    const tracklist: Track[] = data.media[0].tracks;
-    const fetchedSongs = tracklist.map((track: Track) => ({
-      position: track.position,
+    const tracklist: Track[] = data.media.flatMap((medium) => {return medium.tracks})
+    const fetchedSongs = tracklist.map((track: Track, index: number) => ({
+      position: index + 1,
       title: track.title,
     }));
     setSongs(fetchedSongs);

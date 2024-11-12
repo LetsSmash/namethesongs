@@ -201,11 +201,20 @@ const Form = () => {
       });
 
       const uniqueTrackCountReleases = sortedAlbums.map((releaseData) => {
-        const filtered = releaseData.releases.filter(
+        const combinedTracksReleases = releaseData.releases.map((release) => {
+          const combinedTracks = release.media.reduce((acc, media) => {
+            return acc + media["track-count"];
+          }, 0);
+          return {
+            ...release,
+            combinedTracks,
+          };
+        });
+        const filtered = combinedTracksReleases.filter(
           (release, index, self) =>
             self.findIndex(
               (r) =>
-                r.media[0]["track-count"] === release.media[0]["track-count"]
+                r.combinedTracks === release.combinedTracks
             ) === index
         );
         return {
@@ -226,7 +235,7 @@ const Form = () => {
             type: releaseData.type,
             secondary: releaseData.secondary,
             releases: releaseData.releases.sort(
-              (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
+              (a, b) => a.combinedTracks - b.combinedTracks
             ),
             releaseDate: releaseData.releaseDate,
           };
@@ -289,15 +298,23 @@ const Form = () => {
     );
   });
 
-  const uniqueTrackCountReleases = releases.filter(
+  const combinedTracksReleases = releases.map((release) => {
+    const combinedTracks = release.media.reduce((acc, media) => {
+      return acc + media["track-count"];
+    }, 0);
+    return {
+      ...release,
+      combinedTracks,
+    };
+  });
+
+  const uniqueTrackCountReleases : Release[] = combinedTracksReleases.filter(
     (release, index, self) =>
-      self.findIndex(
-        (r) => r.media[0]["track-count"] === release.media[0]["track-count"]
-      ) === index
+      self.findIndex((r) => r.combinedTracks === release.combinedTracks) === index
   );
 
   const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
-    (a, b) => a.media[0]["track-count"] - b.media[0]["track-count"]
+    (a, b) => (a.combinedTracks ?? 0) - (b.combinedTracks ?? 0)
   );
 
   const handleRadioChange = (index: number, value: string) => {
@@ -437,7 +454,7 @@ const Form = () => {
                                     {release.disambiguation
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
-                                    {`${release.media[0]["track-count"]} Tracks`}
+                                    {`${release.combinedTracks} Tracks`}
                                     {`, ${release["release-events"][0]?.date})` ||
                                       ", No date available)"}
                                   </Radio>
@@ -587,7 +604,7 @@ const Form = () => {
                                               {release.disambiguation
                                                 ? ` (${release.disambiguation}, `
                                                 : " ("}
-                                              {`${release.media[0]["track-count"]} Tracks)`}
+                                              {`${release.combinedTracks} Tracks)`}
                                             </Radio>
                                           )
                                         )}

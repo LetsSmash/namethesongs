@@ -17,6 +17,7 @@ export interface Release {
   status: string;
   quality: string;
   media: Medum[];
+  combinedTracks?: number;
   asin: string;
   "cover-art-archive": CoverArtArchive;
   "text-representation": TextRepresentation;

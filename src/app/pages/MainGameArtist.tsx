@@ -39,8 +39,8 @@ const MainGameArtist = (props: { artist: string }) => {
   useEffect(() => {
     if (releases.length > 0 && releaseIDs.length > 0){
       const allSongs = releases.flatMap((release) => {
-        return release.media[0].tracks.map((track) => {
-          return track;
+        return release.media.flatMap((medium) => {
+          return medium.tracks;
         });
       });
       setSongs(allSongs)
@@ -69,7 +69,7 @@ const MainGameArtist = (props: { artist: string }) => {
 
   return (
     <>
-      <div className="flex justify-center my-4">
+      <div className="flex justify-center my-4 sticky top-0 z-50 bg-white">
         <div className="w-full max-w-xs">
           <h1 className="font-bold text-2xl">
             {correctGuesses.length} / {songs.length}
@@ -93,7 +93,7 @@ const MainGameArtist = (props: { artist: string }) => {
               </CardHeader>
               <Divider />
               <ul className="divide-y divide-gray-400">
-                {release.media[0].tracks.map((track: Track) => (
+                {release.media.flatMap((medium) => medium.tracks).map((track: Track) => (
                   <li key={track.id} className="p-2 text-center">
                     <span
                       className={
