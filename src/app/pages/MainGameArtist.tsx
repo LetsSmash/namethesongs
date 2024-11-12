@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchReleaseInfos, normalizeString } from "../utils";
+import {
+  fetchReleaseInfos,
+  getArtistInfo,
+  getArtistLogo,
+  normalizeString,
+} from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import { Card, CardHeader, Divider } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
+import Image from "next/image";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState([]);
@@ -13,6 +19,25 @@ const MainGameArtist = (props: { artist: string }) => {
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
   const [songs, setSongs] = useState<Track[]>([]);
+  const [artistLogo, setArtistLogo] = useState<string>("");
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const logo = await getArtistLogo(props.artist);
+        if (logo) {
+          setArtistLogo(logo);
+        } else {
+          console.warn("No Artist Logo available");
+          setArtistLogo("");
+        }
+      } catch (error) {
+        console.error("Error fetching artist logo:", error);
+        setArtistLogo("");
+      }
+    };
+    fetchLogo();
+  }, [props.artist]);
 
   useEffect(() => {
     const storedReleases = localStorage.getItem("releases");
@@ -37,15 +62,15 @@ const MainGameArtist = (props: { artist: string }) => {
   }, [releaseIDs]);
 
   useEffect(() => {
-    if (releases.length > 0 && releaseIDs.length > 0){
+    if (releases.length > 0 && releaseIDs.length > 0) {
       const allSongs = releases.flatMap((release) => {
         return release.media.flatMap((medium) => {
           return medium.tracks;
         });
       });
-      setSongs(allSongs)
+      setSongs(allSongs);
     }
-  }, [releases, releaseIDs.length])
+  }, [releases, releaseIDs.length]);
 
   const sortedAlbums = releases.sort((a, b) => {
     return (
@@ -69,9 +94,20 @@ const MainGameArtist = (props: { artist: string }) => {
 
   return (
     <>
-      <div className="flex justify-center my-4 sticky top-0 z-50 bg-white">
+      {artistLogo !== "" && (
+        <div className="flex justify-center">
+          <Image
+            src={artistLogo}
+            alt="Artist Logo"
+            width={300}
+            height={300}
+            className="h-min"
+          />
+        </div>
+      )}
+      <div className="flex justify-center sticky top-0 z-50 bg-white">
         <div className="w-full max-w-xs">
-          <h1 className="font-bold text-2xl">
+          <h1 className="font-bold text-2xl text-center">
             {correctGuesses.length} / {songs.length}
           </h1>
           <FormInput
@@ -79,6 +115,7 @@ const MainGameArtist = (props: { artist: string }) => {
             name="song"
             value={currentGuess}
             onChange={inputChange}
+            classes="mt-2"
           />
         </div>
       </div>
@@ -93,17 +130,21 @@ const MainGameArtist = (props: { artist: string }) => {
               </CardHeader>
               <Divider />
               <ul className="divide-y divide-gray-400">
-                {release.media.flatMap((medium) => medium.tracks).map((track: Track) => (
-                  <li key={track.id} className="p-2 text-center">
-                    <span
-                      className={
-                        correctGuesses.includes(track.title) ? "" : "invisible"
-                      }
-                    >
-                      {track.title}
-                    </span>
-                  </li>
-                ))}
+                {release.media
+                  .flatMap((medium) => medium.tracks)
+                  .map((track: Track) => (
+                    <li key={track.id} className="p-2 text-center">
+                      <span
+                        className={
+                          correctGuesses.includes(track.title)
+                            ? "visible"
+                            : "invisible"
+                        }
+                      >
+                        {track.title}
+                      </span>
+                    </li>
+                  ))}
               </ul>
             </div>
           </Card>
