@@ -97,27 +97,6 @@ export const normalizeString = (str: string) => {
     .toLowerCase();
 };
 
-export const getArtistLogo = async (id: string) => {
-  try {
-    const apiKey = process.env.NEXT_PUBLIC_TADB_PRIVATE_KEY;
-    if (!apiKey) {
-      throw new Error("TADB_PRIVATE_KEY is not set");
-    }
-    const { data } = await axios.get<AudioDBArtist>(
-      `https://www.theaudiodb.com/api/v1/json/${apiKey}/artist-mb.php`,
-      {
-        params: {
-          i: id,
-        },
-      }
-    );
-    return data.artists[0].strArtistLogo;
-  } catch (error) {
-    console.error("Error fetching artist logo:", error);
-    throw error;
-  }
-};
-
 export const getArtistInfo = async (id: string) => {
   try {
     const { data } = await axios.get<Artist>(

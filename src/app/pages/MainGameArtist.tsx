@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import {
   fetchReleaseInfos,
   getArtistInfo,
-  getArtistLogo,
   normalizeString,
 } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import { Card, CardHeader, Divider } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
 import Image from "next/image";
+import axios from "axios";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState([]);
@@ -24,9 +24,9 @@ const MainGameArtist = (props: { artist: string }) => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const logo = await getArtistLogo(props.artist);
-        if (logo) {
-          setArtistLogo(logo);
+        const {data} = await axios.get<string>("/api/getArtistLogo/" + props.artist);
+        if (data) {
+          setArtistLogo(data);
         } else {
           console.warn("No Artist Logo available");
           setArtistLogo("");
