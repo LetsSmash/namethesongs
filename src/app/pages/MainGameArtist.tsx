@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import {
-  fetchReleaseInfos,
-  getArtistInfo,
-  normalizeString,
-} from "../utils";
+import { fetchReleaseInfos, getArtistInfo, normalizeString } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import { Card, CardHeader, Divider } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
 import Image from "next/image";
 import axios from "axios";
+import Countdown from "react-countdown";
+import { set } from "lodash";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState([]);
@@ -20,11 +18,16 @@ const MainGameArtist = (props: { artist: string }) => {
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
   const [songs, setSongs] = useState<Track[]>([]);
   const [artistLogo, setArtistLogo] = useState<string>("");
+  const [hasEnded, setHasEnded] = useState(false);
+
+  const countdownRef = useRef<Countdown>(null);
 
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const {data} = await axios.get<string>("/api/getArtistLogo/" + props.artist);
+        const { data } = await axios.get<string>(
+          "/api/getArtistLogo/" + props.artist
+        );
         if (data) {
           setArtistLogo(data);
         } else {
@@ -92,6 +95,13 @@ const MainGameArtist = (props: { artist: string }) => {
     }
   };
 
+  const stopCountdown = () => {
+    if (countdownRef.current) {
+      countdownRef.current.pause();
+    }
+    setHasEnded(true);
+  }
+
   return (
     <>
       {artistLogo !== "" && (
@@ -107,16 +117,39 @@ const MainGameArtist = (props: { artist: string }) => {
       )}
       <div className="flex justify-center sticky top-0 z-50 bg-white">
         <div className="w-full max-w-xs">
-          <h1 className="font-bold text-2xl text-center">
+          <h1 className="font-bold text-2xl text-left w-min inline mr-auto">
             {correctGuesses.length} / {songs.length}
           </h1>
-          <FormInput
-            id="song"
-            name="song"
-            value={currentGuess}
-            onChange={inputChange}
-            classes="mt-2"
+          <Countdown
+            date={Date.now() + 20 * 60000}
+            ref={countdownRef}
+            onComplete={() => {
+              setHasEnded(true);
+            }}
+            renderer={(props) => (
+              <p className="font-bold text-2xl w-min inline">
+                {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+              </p>
+            )}
           />
+          {!hasEnded && (
+            <>
+              <FormInput
+                id="song"
+                name="song"
+                value={currentGuess}
+                onChange={inputChange}
+                classes="mt-2"
+              />
+              <button
+                onClick={stopCountdown}
+                className="hover:underline hover:cursor-pointer text-left"
+              >
+                Give Up
+              </button>
+            </>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
