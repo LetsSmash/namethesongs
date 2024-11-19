@@ -172,7 +172,7 @@ const Form = () => {
       // Yes, everything that follows is stupid, cause i already have the ReleaseGroups.
       // BUT: The releases inside the ReleaseGroups doesn't have any Media Information. If anyone ever sees this, please help me improve this lol
       for (const group of fetchedReleaseGroups) {
-        await sleep(1000);
+        await sleep(600);
         try {
           const { data } = await axios.get<ReleaseRoot>(
             `api/getReleases/${group.id}`
@@ -213,8 +213,7 @@ const Form = () => {
         const filtered = combinedTracksReleases.filter(
           (release, index, self) =>
             self.findIndex(
-              (r) =>
-                r.combinedTracks === release.combinedTracks
+              (r) => r.combinedTracks === release.combinedTracks
             ) === index
         );
         return {
@@ -308,9 +307,10 @@ const Form = () => {
     };
   });
 
-  const uniqueTrackCountReleases : Release[] = combinedTracksReleases.filter(
+  const uniqueTrackCountReleases: Release[] = combinedTracksReleases.filter(
     (release, index, self) =>
-      self.findIndex((r) => r.combinedTracks === release.combinedTracks) === index
+      self.findIndex((r) => r.combinedTracks === release.combinedTracks) ===
+      index
   );
 
   const sortedTrackCountReleases = uniqueTrackCountReleases.sort(
@@ -623,13 +623,15 @@ const Form = () => {
                             >
                               Return to Form
                             </Button>
-                            <Button
-                              color="primary"
-                              type="submit"
-                              onPress={() => setSubmitted(true)}
-                            >
-                              Start!
-                            </Button>
+                            {releaseGroupsReleases.length !== 0 && (
+                              <Button
+                                color="primary"
+                                type="submit"
+                                onPress={() => setSubmitted(true)}
+                              >
+                                Start!
+                              </Button>
+                            )}
                           </ModalFooter>
                         </>
                       )}

@@ -3,23 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchReleaseInfos, normalizeString } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
-import { Card, CardHeader, Divider } from "@nextui-org/react";
+import { Button, Card, CardHeader, Divider } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
 import Image from "next/image";
 import axios from "axios";
 import Countdown from "react-countdown";
+import { notFound, useRouter } from "next/navigation";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState<string[]>([]);
   const [releases, setReleases] = useState<TracklistRoot[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
-  const [songs, setSongs] = useState<Track[]>([]);
+  const [songs, setSongs] = useState<string[]>([]);
   const [artistLogo, setArtistLogo] = useState<string>("");
   const [hasEnded, setHasEnded] = useState(false);
   const [endTime] = useState(Date.now() + 15 * 60000);
+  const [hasReleases, setHasReleases] = useState(false);
 
   const countdownRef = useRef<Countdown>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -43,11 +47,13 @@ const MainGameArtist = (props: { artist: string }) => {
 
   useEffect(() => {
     const storedReleases = localStorage.getItem("releases");
-    if (storedReleases) {
+    if (storedReleases && storedReleases !== "[]") {
       const parsedReleases = JSON.parse(storedReleases);
+      setHasReleases(true);
       setReleaseIDs(parsedReleases);
     } else {
-      console.warn("No releases found in localStorage.");
+      alert("You need to select some albums first!");
+      notFound();
     }
   }, []);
 
@@ -79,16 +85,11 @@ const MainGameArtist = (props: { artist: string }) => {
         release.media.flatMap((medium) => medium.tracks)
       );
 
-      const uniqueSongsMap = new Map<string, Track>();
-      allSongs.forEach((song) => {
-        const normalizedTitle = normalizeString(song.title);
-        if (!uniqueSongsMap.has(normalizedTitle)) {
-          uniqueSongsMap.set(normalizedTitle, song);
-        }
-      });
-
-      const uniqueSongs = Array.from(uniqueSongsMap.values());
-      setSongs(uniqueSongs);
+      const normalizedTitles = allSongs.map((song) =>
+        normalizeString(song.title)
+      );
+      const uniqueNormalizedTitles = Array.from(new Set(normalizedTitles));
+      setSongs(uniqueNormalizedTitles);
     }
   }, [releases]);
 
@@ -104,19 +105,12 @@ const MainGameArtist = (props: { artist: string }) => {
     setCurrentGuess(guess);
 
     const normalizedGuess = normalizeString(guess);
-    const matchedSongs = songs.filter(
-      (song) => normalizeString(song.title) === normalizedGuess
-    );
-
-    if (matchedSongs.length > 0) {
-      const newGuesses = matchedSongs
-        .map((song) => song.title)
-        .filter((title) => !correctGuesses.includes(title));
-
-      if (newGuesses.length > 0) {
-        setCorrectGuesses([...correctGuesses, ...newGuesses]);
-        setCurrentGuess("");
-      }
+    if (
+      songs.includes(normalizedGuess) &&
+      !correctGuesses.includes(normalizedGuess)
+    ) {
+      setCorrectGuesses([...correctGuesses, normalizedGuess]);
+      setCurrentGuess("");
     }
   };
 
@@ -127,99 +121,123 @@ const MainGameArtist = (props: { artist: string }) => {
     setHasEnded(true);
   };
 
+  useEffect(() => {
+    if (correctGuesses.length === songs.length && songs.length > 0) {
+      stopCountdown();
+    }
+  }, [correctGuesses, songs]);
+
   return (
     <>
-      {artistLogo && (
-        <div className="flex justify-center">
-          <Image
-            src={artistLogo}
-            alt="Artist Logo"
-            width={300}
-            height={300}
-            className="h-min"
-          />
-        </div>
-      )}
-      <div className="flex justify-center sticky top-0 z-50 bg-white">
-        <div className="w-full max-w-xs">
-          <div className="flex justify-between">
-            <h1 className="font-bold text-2xl text-left">
-              {correctGuesses.length} / {songs.length}
-            </h1>
-            <Countdown
-              date={endTime}
-              ref={countdownRef}
-              onComplete={() => {
-                setHasEnded(true);
-              }}
-              renderer={({ minutes, seconds }) => (
-                <p className="font-bold text-2xl text-right">
-                  {minutes < 10 ? `0${minutes}` : minutes}:
-                  {seconds < 10 ? `0${seconds}` : seconds}
-                </p>
-              )}
-            />
-          </div>
-          {!hasEnded && (
-            <>
-              <FormInput
-                id="song"
-                name="song"
-                value={currentGuess}
-                onChange={inputChange}
-                classes="mt-2"
+      {hasReleases && (
+        <>
+          {artistLogo && (
+            <div className="flex justify-center">
+              <Image
+                src={artistLogo}
+                alt="Artist Logo"
+                width={300}
+                height={300}
+                className="h-min"
               />
-              <button
-                onClick={stopCountdown}
-                className="hover:underline hover:cursor-pointer text-left"
-              >
-                Give Up
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {sortedAlbums.map((release) => (
-          <Card key={release.id} className="p-3 h-min">
-            <div>
-              <CardHeader className="justify-center">
-                <h1 className="text-center font-bold text-2xl">
-                  {release["release-group"].title}
-                </h1>
-              </CardHeader>
-              <Divider />
-              <ul className="divide-y divide-gray-400">
-                {release.media
-                  .flatMap((medium) => medium.tracks)
-                  .map((track: Track) => {
-                    const isGuessed = correctGuesses.includes(
-                      track.title
-                    );
-                    return (
-                      <li key={track.id} className="p-2 text-center">
-                        {!hasEnded && (
-                          <span className={isGuessed ? "visible" : "invisible"}>
-                            {track.title}
-                          </span>
-                        )}
-                        {hasEnded && (
-                          <span
-                            className={
-                              isGuessed ? "text-green-500" : "text-red-600"
-                            }
-                          >
-                            {track.title}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-              </ul>
             </div>
-          </Card>
-        ))}
-      </div>
+          )}
+          <div className="flex justify-center sticky top-0 z-50 bg-white">
+            <div className="w-full max-w-xs">
+              <div className="flex justify-between">
+                <h1 className="font-bold text-2xl text-left">
+                  {correctGuesses.length} / {songs.length}
+                </h1>
+                {hasEnded && (
+                  <h1 className="font-bold text-2xl">
+                    {Math.floor((100 * correctGuesses.length) / songs.length)}%
+                  </h1>
+                )}
+                <Countdown
+                  date={endTime}
+                  ref={countdownRef}
+                  onComplete={() => {
+                    setHasEnded(true);
+                  }}
+                  renderer={({ minutes, seconds }) => (
+                    <p className="font-bold text-2xl text-right">
+                      {minutes < 10 ? `0${minutes}` : minutes}:
+                      {seconds < 10 ? `0${seconds}` : seconds}
+                    </p>
+                  )}
+                />
+              </div>
+              {!hasEnded && (
+                <>
+                  <FormInput
+                    id="song"
+                    name="song"
+                    value={currentGuess}
+                    onChange={inputChange}
+                    classes="mt-2"
+                  />
+                  <button
+                    onClick={stopCountdown}
+                    className="hover:underline hover:cursor-pointer text-left"
+                  >
+                    Give Up
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {sortedAlbums.map((release) => (
+              <Card key={release.id} className="p-3 h-min">
+                <div>
+                  <CardHeader className="justify-center">
+                    <h1 className="text-center font-bold text-2xl">
+                      {release["release-group"].title}
+                    </h1>
+                  </CardHeader>
+                  <Divider />
+                  <ul className="divide-y divide-gray-400">
+                    {release.media
+                      .flatMap((medium) => medium.tracks)
+                      .map((track: Track) => {
+                        const normalizedTitle = normalizeString(track.title);
+                        const isGuessed =
+                          correctGuesses.includes(normalizedTitle);
+                        return (
+                          <li key={track.id} className="p-2 text-center">
+                            {!hasEnded && (
+                              <span
+                                className={isGuessed ? "visible" : "invisible"}
+                              >
+                                {track.title}
+                              </span>
+                            )}
+                            {hasEnded && (
+                              <span
+                                className={
+                                  isGuessed ? "text-green-500" : "text-red-600"
+                                }
+                              >
+                                {track.title}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+              </Card>
+            ))}
+          </div>
+          {hasEnded && (
+            <div className="flex justify-center">
+              <Button color="primary" style={{width: 381}} onClick={() => {router.push("/")}}>
+                Try with another artist 
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </>
   );
 };
