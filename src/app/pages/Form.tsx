@@ -172,7 +172,7 @@ const Form = () => {
       // Yes, everything that follows is stupid, cause i already have the ReleaseGroups.
       // BUT: The releases inside the ReleaseGroups doesn't have any Media Information. If anyone ever sees this, please help me improve this lol
       for (const group of fetchedReleaseGroups) {
-        await sleep(100);
+        await sleep(1000);
         try {
           const { data } = await axios.get<ReleaseRoot>(
             `api/getReleases/${group.id}`

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-import { fetchReleaseInfos, getArtistInfo, normalizeString } from "../utils";
+import { fetchReleaseInfos, normalizeString } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import { Card, CardHeader, Divider } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
@@ -11,7 +10,7 @@ import axios from "axios";
 import Countdown from "react-countdown";
 
 const MainGameArtist = (props: { artist: string }) => {
-  const [releaseIDs, setReleaseIDs] = useState([]);
+  const [releaseIDs, setReleaseIDs] = useState<string[]>([]);
   const [releases, setReleases] = useState<TracklistRoot[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
@@ -26,7 +25,7 @@ const MainGameArtist = (props: { artist: string }) => {
     const fetchLogo = async () => {
       try {
         const { data } = await axios.get<string>(
-          "/api/getArtistLogo/" + props.artist
+          `/api/getArtistLogo/${props.artist}`
         );
         if (data) {
           setArtistLogo(data);
@@ -45,35 +44,53 @@ const MainGameArtist = (props: { artist: string }) => {
   useEffect(() => {
     const storedReleases = localStorage.getItem("releases");
     if (storedReleases) {
-      setReleaseIDs(JSON.parse(storedReleases));
+      const parsedReleases = JSON.parse(storedReleases);
+      setReleaseIDs(parsedReleases);
+    } else {
+      console.warn("No releases found in localStorage.");
     }
   }, []);
 
   useEffect(() => {
+    const fetchAllReleases = async () => {
+      try {
+        const fetchedReleases = await Promise.all(
+          releaseIDs
+            .filter((id: string) => id !== "")
+            .map(async (id: string) => {
+              const data = await fetchReleaseInfos(id);
+              return data;
+            })
+        );
+        setReleases(fetchedReleases);
+      } catch (error) {
+        console.error("Error fetching album info:", error);
+      }
+    };
+
     if (releaseIDs.length > 0 && releases.length === 0) {
-      releaseIDs.map(async (id: string) => {
-        try {
-          if (id !== "") {
-            const data = await fetchReleaseInfos(id);
-            setReleases((prevReleases) => [...prevReleases, data]);
-          }
-        } catch (error) {
-          console.error("Error fetching album info:", error);
-        }
-      });
+      fetchAllReleases();
     }
-  }, [releaseIDs]);
+  }, [releaseIDs, releases.length]);
 
   useEffect(() => {
-    if (releases.length > 0 && releaseIDs.length > 0) {
-      const allSongs = releases.flatMap((release) => {
-        return release.media.flatMap((medium) => {
-          return medium.tracks;
-        });
+    if (releases.length > 0) {
+      const allSongs = releases.flatMap((release) =>
+        release.media.flatMap((medium) => medium.tracks)
+      );
+
+      const uniqueSongsMap = new Map<string, Track>();
+      allSongs.forEach((song) => {
+        const normalizedTitle = normalizeString(song.title);
+        if (!uniqueSongsMap.has(normalizedTitle)) {
+          uniqueSongsMap.set(normalizedTitle, song);
+        }
       });
-      setSongs(allSongs);
+
+      const uniqueSongs = Array.from(uniqueSongsMap.values());
+      setSongs(uniqueSongs);
     }
-  }, [releases, releaseIDs.length]);
+  }, [releases]);
 
   const sortedAlbums = releases.sort((a, b) => {
     return (
@@ -86,12 +103,20 @@ const MainGameArtist = (props: { artist: string }) => {
     const guess = e.target.value;
     setCurrentGuess(guess);
 
-    const correctGuess = songs.find(
-      (song) => normalizeString(song.title) === normalizeString(guess)
+    const normalizedGuess = normalizeString(guess);
+    const matchedSongs = songs.filter(
+      (song) => normalizeString(song.title) === normalizedGuess
     );
-    if (correctGuess && !correctGuesses.includes(correctGuess.title)) {
-      setCorrectGuesses([...correctGuesses, correctGuess.title]);
-      setCurrentGuess("");
+
+    if (matchedSongs.length > 0) {
+      const newGuesses = matchedSongs
+        .map((song) => song.title)
+        .filter((title) => !correctGuesses.includes(title));
+
+      if (newGuesses.length > 0) {
+        setCorrectGuesses([...correctGuesses, ...newGuesses]);
+        setCurrentGuess("");
+      }
     }
   };
 
@@ -104,7 +129,7 @@ const MainGameArtist = (props: { artist: string }) => {
 
   return (
     <>
-      {artistLogo !== "" && (
+      {artistLogo && (
         <div className="flex justify-center">
           <Image
             src={artistLogo}
@@ -127,10 +152,10 @@ const MainGameArtist = (props: { artist: string }) => {
               onComplete={() => {
                 setHasEnded(true);
               }}
-              renderer={(props) => (
+              renderer={({ minutes, seconds }) => (
                 <p className="font-bold text-2xl text-right">
-                  {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
-                  {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                  {minutes < 10 ? `0${minutes}` : minutes}:
+                  {seconds < 10 ? `0${seconds}` : seconds}
                 </p>
               )}
             />
@@ -167,32 +192,29 @@ const MainGameArtist = (props: { artist: string }) => {
               <ul className="divide-y divide-gray-400">
                 {release.media
                   .flatMap((medium) => medium.tracks)
-                  .map((track: Track) => (
-                    <li key={track.id} className="p-2 text-center">
-                      {!hasEnded && (
-                        <span
-                          className={
-                            correctGuesses.includes(track.title)
-                              ? "visible"
-                              : "invisible"
-                          }
-                        >
-                          {track.title}
-                        </span>
-                      )}
-                      {hasEnded && (
-                        <span
-                          className={
-                            correctGuesses.includes(track.title)
-                              ? "text-green-500"
-                              : "text-red-600"
-                          }
-                        >
-                          {track.title}
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                  .map((track: Track) => {
+                    const isGuessed = correctGuesses.includes(
+                      track.title
+                    );
+                    return (
+                      <li key={track.id} className="p-2 text-center">
+                        {!hasEnded && (
+                          <span className={isGuessed ? "visible" : "invisible"}>
+                            {track.title}
+                          </span>
+                        )}
+                        {hasEnded && (
+                          <span
+                            className={
+                              isGuessed ? "text-green-500" : "text-red-600"
+                            }
+                          >
+                            {track.title}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
               </ul>
             </div>
           </Card>
