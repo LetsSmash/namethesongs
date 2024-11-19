@@ -9,7 +9,6 @@ import FormInput from "../components/FormInput";
 import Image from "next/image";
 import axios from "axios";
 import Countdown from "react-countdown";
-import { set } from "lodash";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState([]);
@@ -19,6 +18,7 @@ const MainGameArtist = (props: { artist: string }) => {
   const [songs, setSongs] = useState<Track[]>([]);
   const [artistLogo, setArtistLogo] = useState<string>("");
   const [hasEnded, setHasEnded] = useState(false);
+  const [endTime] = useState(Date.now() + 15 * 60000);
 
   const countdownRef = useRef<Countdown>(null);
 
@@ -100,7 +100,7 @@ const MainGameArtist = (props: { artist: string }) => {
       countdownRef.current.pause();
     }
     setHasEnded(true);
-  }
+  };
 
   return (
     <>
@@ -117,22 +117,24 @@ const MainGameArtist = (props: { artist: string }) => {
       )}
       <div className="flex justify-center sticky top-0 z-50 bg-white">
         <div className="w-full max-w-xs">
-          <h1 className="font-bold text-2xl text-left w-min inline mr-auto">
-            {correctGuesses.length} / {songs.length}
-          </h1>
-          <Countdown
-            date={Date.now() + 20 * 60000}
-            ref={countdownRef}
-            onComplete={() => {
-              setHasEnded(true);
-            }}
-            renderer={(props) => (
-              <p className="font-bold text-2xl w-min inline">
-                {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
-                {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
-              </p>
-            )}
-          />
+          <div className="flex justify-between">
+            <h1 className="font-bold text-2xl text-left">
+              {correctGuesses.length} / {songs.length}
+            </h1>
+            <Countdown
+              date={endTime}
+              ref={countdownRef}
+              onComplete={() => {
+                setHasEnded(true);
+              }}
+              renderer={(props) => (
+                <p className="font-bold text-2xl text-right">
+                  {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                  {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                </p>
+              )}
+            />
+          </div>
           {!hasEnded && (
             <>
               <FormInput
@@ -167,15 +169,28 @@ const MainGameArtist = (props: { artist: string }) => {
                   .flatMap((medium) => medium.tracks)
                   .map((track: Track) => (
                     <li key={track.id} className="p-2 text-center">
-                      <span
-                        className={
-                          correctGuesses.includes(track.title)
-                            ? "visible"
-                            : "invisible"
-                        }
-                      >
-                        {track.title}
-                      </span>
+                      {!hasEnded && (
+                        <span
+                          className={
+                            correctGuesses.includes(track.title)
+                              ? "visible"
+                              : "invisible"
+                          }
+                        >
+                          {track.title}
+                        </span>
+                      )}
+                      {hasEnded && (
+                        <span
+                          className={
+                            correctGuesses.includes(track.title)
+                              ? "text-green-500"
+                              : "text-red-600"
+                          }
+                        >
+                          {track.title}
+                        </span>
+                      )}
                     </li>
                   ))}
               </ul>
