@@ -8,8 +8,8 @@ interface Params {
 
 export async function generateMetadata({ params }: { params: Params }) {
   const id = params.album;
-  const releaseInfo = await fetchReleaseGroupFromRelease(id)
-  const albumInfo = await fetchAlbumInfos(releaseInfo["release-group"].id)
+  const releaseInfo = await fetchReleaseGroupFromRelease(id);
+  const albumInfo = await fetchAlbumInfos(releaseInfo["release-group"].id);
 
   return {
     metadataBase: new URL("https://namethesongs.vercel.app/"),
@@ -22,8 +22,10 @@ export async function generateMetadata({ params }: { params: Params }) {
 
 export default function Page({ params }: { params: Params }) {
   return (
-    <FormBackground>
-      <MainGame album={params.album} />
-    </FormBackground>
+    <div className="flex justify-center items-center max-w-">
+      <FormBackground additionalClasses="w-full max-w-md">
+        <MainGame album={params.album} />
+      </FormBackground>
+    </div>
   );
 }
