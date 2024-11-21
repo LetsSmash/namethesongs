@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { TracklistRoot, Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
-import { fetchAlbumInfos } from "../utils";
+import { fetchAlbumInfos, normalizeString } from "../utils";
 
 const MainGame = (props: { album: string }) => {
   const [releaseMBID, setReleaseMBID] = useState<Release["id"]>("");
@@ -46,31 +46,14 @@ const MainGame = (props: { album: string }) => {
     const albumInfos = await fetchAlbumInfos(data["release-group"].id)
     setAlbumName(albumInfos.title)
     setArtistName(albumInfos["artist-credit"][0].name)
-    const tracklist: Track[] = data.media[0].tracks;
-    const fetchedSongs = tracklist.map((track: Track) => ({
-      position: track.position,
+    const tracklist: Track[] = data.media.flatMap((medium) => {return medium.tracks})
+    const fetchedSongs = tracklist.map((track: Track, index: number) => ({
+      position: index + 1,
       title: track.title,
     }));
     setSongs(fetchedSongs);
   }, [releaseMBID]);
 
-  const normalizeString = (str: string) => {
-    return str
-      .replace(/’/g, "'")
-      .replace(/Ä/g, "A")
-      .replace(/ä/g, "a")
-      .replace(/Ö/g, "O")
-      .replace(/ö/g, "o")
-      .replace(/Ü/g, "U")
-      .replace(/ü/g, "u")
-      .replace(/&/g, "and")
-      .replace(/and/g, "&")
-      .replace(
-        /[^a-zA-Z0-9\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Cyrillic}]/gu,
-        ""
-      )
-      .toLowerCase();
-  };
 
   const inputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const guess = e.target.value;
@@ -165,7 +148,7 @@ const MainGame = (props: { album: string }) => {
           />
           <button
             onClick={stopCountdown}
-            className="hover:underline hover:cursor-pointer"
+            className="hover:underline hover:cursor-pointer text-left"
           >
             Give Up
           </button>
@@ -204,3 +187,4 @@ const MainGame = (props: { album: string }) => {
 };
 
 export default MainGame;
+
