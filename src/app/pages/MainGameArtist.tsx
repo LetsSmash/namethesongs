@@ -18,7 +18,7 @@ const MainGameArtist = (props: { artist: string }) => {
   const [songs, setSongs] = useState<string[]>([]);
   const [artistLogo, setArtistLogo] = useState<string>("");
   const [hasEnded, setHasEnded] = useState(false);
-  const [endTime] = useState(Date.now() + 15 * 60000);
+  const [endTime] = useState(Date.now() + 20 * 60000);
   const [hasReleases, setHasReleases] = useState(false);
 
   const countdownRef = useRef<Countdown>(null);
