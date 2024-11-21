@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Params }) {
 
 export default function Page({ params }: { params: Params }) {
   return (
-    <div className="flex justify-center items-center max-w-">
+    <div className="flex justify-center items-center">
       <FormBackground additionalClasses="w-full max-w-md">
         <MainGame album={params.album} />
       </FormBackground>
