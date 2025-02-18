@@ -454,9 +454,8 @@ const Form = () => {
                                     {release.disambiguation
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
-                                    {`${release.combinedTracks} Tracks`}
-                                    {`, ${release["release-events"][0]?.date})` ||
-                                      ", No date available)"}
+                                    {`${release.combinedTracks} Tracks, `}
+                                    {release["release-events"] ? `${release["release-events"][0].date}` : "No Date available)"}
                                   </Radio>
                                 ))
                               ) : (

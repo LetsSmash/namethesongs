@@ -90,6 +90,7 @@ export const normalizeString = (str: string) => {
     .replace(/ü/g, "u")
     .replace(/&/g, "and")
     .replace(/and/g, "&")
+    .replace(/\s*\([^)]*\)/gu, "")
     .replace(
       /[^a-zA-Z0-9\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Cyrillic}]/gu,
       ""
