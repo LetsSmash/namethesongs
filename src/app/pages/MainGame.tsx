@@ -180,7 +180,12 @@ const MainGame = (props: { album: string }) => {
         )}
       </div>
       {hasEnded && (
-        <FormButton onClick={() => router.push("/")}>Restart</FormButton>
+          <>
+            <FormButton onClick={() => router.push("/")}>Restart</FormButton>
+            <FormButton>
+              Save Score
+            </FormButton>
+          </>
       )}
     </>
   );

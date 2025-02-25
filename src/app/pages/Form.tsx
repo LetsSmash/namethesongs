@@ -33,6 +33,7 @@ import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
 import { availableSecondaryTypes } from "@/types/consts";
 import { fetchArtistReleaseGroups } from "../utils";
 import { Release, ReleaseRoot } from "@/types/release";
+import {SignedIn, SignedOut, SignInButton, UserButton} from "@clerk/nextjs";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
@@ -336,6 +337,12 @@ const Form = () => {
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <FormBackground>
+        <SignedOut>
+          <SignInButton />
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
         {!submitted && (
           <>
             <form
