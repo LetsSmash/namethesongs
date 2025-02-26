@@ -344,7 +344,9 @@ const Form = () => {
           </div>
         </SignedOut>
         <SignedIn>
-          <UserButton />
+          <div className="flex justify-end pb-4">
+            <UserButton />
+          </div>
         </SignedIn>
         {!submitted && (
           <>
