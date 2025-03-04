@@ -339,8 +339,8 @@ const Form = () => {
       <FormBackground>
         <SignedOut>
           <div className="grid grid-cols-2 gap-x-4">
-            <SignInButton />
-            <SignUpButton />
+            <SignInButton mode="modal" />
+            <SignUpButton mode="modal" />
           </div>
         </SignedOut>
         <SignedIn>
@@ -467,11 +467,11 @@ const Form = () => {
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
                                     {`${release.combinedTracks} Tracks, `}
-                                    {release["release-events"] ? `${release["release-events"][0].date}` : "No Date available)"}
+                                    {release["release-events"] ? `${release["release-events"][0].date})` : "No Date available)"}
                                   </Radio>
                                 ))
                               ) : (
-                                <p>No releases available</p>
+                                <p>Loading...</p>
                               )}
                             </RadioGroup>
                           </ModalBody>
