@@ -73,7 +73,7 @@ const MainGame = (props: { album: string }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restoringState, setRestoringState] = useState(false);
   const [scores, setScores] = useState<ScoreSchema[]>([]);
-  const [usernames, setUsernames] = useState<{[key: string]: string}>({});
+  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
   const [scoreSaved, setScoreSaved] = useState(false);
 
   const {
@@ -200,9 +200,11 @@ const MainGame = (props: { album: string }) => {
   const stopCountdown = () => {
     if (countdownRef.current) {
       countdownRef.current.pause();
-      setRemainingMinutes(countdownRef.current.getRenderProps().minutes);
-      setRemainingSeconds(countdownRef.current.getRenderProps().seconds);
-      setElapsedMinutes(5 - remainingMinutes);
+      const remainingMinutes = countdownRef.current.getRenderProps().minutes;
+      const remainingSeconds = countdownRef.current.getRenderProps().seconds;
+      setRemainingMinutes(remainingMinutes);
+      setRemainingSeconds(remainingSeconds);
+      setElapsedMinutes(4 - remainingMinutes);
       setElapsedSeconds(
         remainingMinutes === 0 ? 60 - remainingSeconds : 59 - remainingSeconds
       );
@@ -216,15 +218,17 @@ const MainGame = (props: { album: string }) => {
       return usernames[userId];
     }
     return "Loading...";
-  }
+  };
 
   const fetchUsernames = useCallback(async () => {
     if (scores.length === 0) return;
-    
+
     try {
       const promises = scores.map(async (score) => {
         try {
-          const response = await axios.get(`/api/getUsernameById/${score.user_id}`);
+          const response = await axios.get(
+            `/api/getUsernameById/${score.user_id}`
+          );
           return { userId: score.user_id, username: response.data };
         } catch (error) {
           console.error(`Error fetching username for ${score.user_id}:`, error);
@@ -233,12 +237,15 @@ const MainGame = (props: { album: string }) => {
       });
 
       const results = await Promise.all(promises);
-      const newUsernames = results.reduce((acc, { userId, username }) => {
-        acc[userId] = username;
-        return acc;
-      }, {} as {[key: string]: string});
+      const newUsernames = results.reduce(
+        (acc, { userId, username }) => {
+          acc[userId] = username;
+          return acc;
+        },
+        {} as { [key: string]: string }
+      );
 
-      setUsernames(prev => ({ ...prev, ...newUsernames }));
+      setUsernames((prev) => ({ ...prev, ...newUsernames }));
     } catch (error) {
       console.error("Error processing usernames:", error);
     }
@@ -396,7 +403,9 @@ const MainGame = (props: { album: string }) => {
                               <TableCell className="font-bold">
                                 {index + 1}
                               </TableCell>
-                              <TableCell>{getUsernameById(score.user_id)}</TableCell>
+                              <TableCell>
+                                {getUsernameById(score.user_id)}
+                              </TableCell>
                               <TableCell className="text-green-600">
                                 {score.score}
                               </TableCell>
@@ -456,7 +465,7 @@ const MainGame = (props: { album: string }) => {
                   <SignUpButton />
                 </SignedOut>
                 <SignedIn>
-                  {!scoreSaved ? (
+                  {scoreSaved ? (
                     <p className="text-lg font-semibold text-green-600">
                       Score successfully saved!
                     </p>
