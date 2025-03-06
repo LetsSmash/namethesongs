@@ -4,6 +4,9 @@ module.exports = {
       {
         hostname: "www.theaudiodb.com",
       },
+      {
+        hostname: "img.clerk.com",
+      }
     ],
   },
 };
