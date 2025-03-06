@@ -30,7 +30,7 @@ export const fetchReleaseGroupFromRelease = async (id: string) => {
       `https://musicbrainz.org/ws/2/release/${id}`,
       {
         params: {
-          inc: "release-groups",
+          inc: "release-groups+artists",
           fmt: "json",
         },
       }

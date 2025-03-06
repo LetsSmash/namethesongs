@@ -5,6 +5,7 @@ export interface ReleaseRoot {
 }
 
 export interface Release {
+  "artist-credit": ArtistCredit[];
   date: string;
   barcode: string;
   "release-events": Event[];
@@ -23,6 +24,22 @@ export interface Release {
   "text-representation": TextRepresentation;
   disambiguation: string;
   "status-id": string;
+}
+
+export interface ArtistCredit {
+  joinphrase: string;
+  name: string;
+  artist: Artist;
+}
+
+export interface Artist {
+  "type-id": null;
+  "sort-name": string;
+  name: string;
+  disambiguation: string;
+  id: string;
+  type: null;
+  "iso-3166-1-codes"?: string[];
 }
 
 export interface Event {

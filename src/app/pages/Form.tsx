@@ -22,6 +22,7 @@ import {
   Checkbox,
   CheckboxGroup,
   Progress,
+  AvatarIcon,
 } from "@nextui-org/react";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";
@@ -267,6 +268,15 @@ const Form = () => {
     setSelectedReleases(initialSelectedReleases);
   }, [releaseGroupsReleases]);
 
+  
+const DotIcon = () => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+      <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
+    </svg>
+  )
+}
+
   useEffect(() => {
     async function getReleases() {
       const { data } = await axios.get<ReleaseRoot>(
@@ -345,7 +355,11 @@ const Form = () => {
         </SignedOut>
         <SignedIn>
           <div className="flex justify-end pb-4">
-            <UserButton />
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Link href="/user/profile" label="Your Profile" labelIcon={<DotIcon/>}/>
+              </UserButton.MenuItems>
+            </UserButton>
           </div>
         </SignedIn>
         {!submitted && (
