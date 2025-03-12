@@ -13,85 +13,87 @@ import { getUserScoresByAlbum } from "@/app/actions";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 import { fetchReleaseGroupFromRelease } from "@/app/utils";
+import { Release } from "../../types/release";
+import FormButton from "./FormButton";
+import { useRouter } from "next/navigation";
+
+interface ScoreSchema {
+  id: number;
+  user_id: string;
+  mode: string;
+  mbid: string;
+  time: string;
+  score: string;
+}
 
 const Scoreboard = ({ mbid }: { mbid: string }) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
+  const [albumData, setAlbumData] = useState<Release>();
   const [username, setUsername] = useState("");
-  const [albumName, setAlbumName] = useState("");
-  const [artistName, setArtistName] = useState("");
+  const [trackCount, setTrackCount] = useState(0);
 
   const { userId } = useAuth();
+  const router = useRouter();
 
-  interface ScoreSchema {
-    id: number;
-    user_id: string;
-    mode: string;
-    mbid: string;
-    time: string;
-    score: string;
-  }
-
+  // Fetch scores and album data in one useEffect
   useEffect(() => {
-    if (mbid) {
-      getUserScoresByAlbum(mbid)
-        .then((result) => {
-          setScores(result);
-        })
-        .catch((error) => {
-          console.error("Error fetching scores:", error);
-        });
-    }
-  }, [mbid]);
+    if (!mbid) return;
 
-  const fetchUsername = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const response = await axios.get(`/api/getUsernameById/${userId}`);
-      setUsername(response.data);
-    } catch (error) {
-      console.error("Error fetching username:", error);
-      setUsername("Unknown User");
-    }
-  }, [userId]);
+    // Fetch album data
+    const fetchAlbumData = async () => {
+      try {
+        const response = await fetchReleaseGroupFromRelease(mbid);
+        setAlbumData(response);
+      } catch (error) {
+        console.error("Error fetching album data:", error);
+      }
+    };
 
-  useEffect(() => {
+    // Fetch scores
+    const fetchScores = async () => {
+      try {
+        const scoreData = await getUserScoresByAlbum(mbid);
+        setScores(scoreData);
+      } catch (error) {
+        console.error("Error fetching scores:", error);
+      }
+    };
+
+    const fetchUsername = async () => {
+      try {
+        if (userId) {
+          const response = await axios.get(`/api/getUsernameById/${userId}`);
+          setUsername(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching username:", error);
+      }
+    };
+
+    if (albumData?.media) {
+      const totalTracks = albumData.media.reduce(
+        (acc, media) => acc + media["track-count"],
+        0
+      );
+      setTrackCount(totalTracks);
+    }
+
     fetchUsername();
-  }, [fetchUsername]);
-
-  const fetchAlbumInfos = useCallback(async () => {
-    if (!mbid) return;
-    try {
-      const response = await fetchReleaseGroupFromRelease(mbid);
-      setAlbumName(response.title);
-    } catch (error) {
-      console.error("Error fetching album info:", error);
-      setAlbumName("Unknown Album");
-    }
-  }, [mbid]);
-
-  useEffect(() => {
-    fetchAlbumInfos();
-  }, [fetchAlbumInfos]);
-
-  const fetchArtistName = useCallback(async () => {
-    if (!mbid) return;
-    try {
-      const response = await fetchReleaseGroupFromRelease(mbid);
-      setArtistName(response["artist-credit"][0].name);
-    } catch (error) {
-      console.error("Error fetching artist name:", error);
-      setArtistName("Unknown Artist");
-    }
-  }, [mbid]);
-
-  useEffect(() => {
-    fetchArtistName();
-  }, [fetchArtistName]);
+    fetchAlbumData();
+    fetchScores();
+  }, [albumData?.media, mbid, trackCount, userId]);
 
   return (
     <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
-      <h2 className="text-2xl font-bold mb-2">{albumName}</h2>
-      <h3 className="text-xl font-semibold mb-4 text-gray-700">by {artistName}</h3>
+      <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
+        {albumData?.title}
+        {albumData?.disambiguation
+          ? <div className="text-xl text-gray-600 mt-1">({albumData.disambiguation}, {trackCount} Tracks)</div>
+          : <div className="text-xl text-gray-600 mt-1">({trackCount} Tracks)</div>}
+      </h2>
+      <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
+        by <span className="font-semibold text-primary">{albumData?.["artist-credit"][0].name}</span>
+      </h3>
       <Table aria-label="Highscores table" className="w-full">
         <TableHeader>
           <TableColumn className="text-left">Rank</TableColumn>
@@ -115,6 +117,11 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
           ))}
         </TableBody>
       </Table>
+      <FormButton
+        onPress={() => router.push(`/game/album/${mbid}`)}
+      >
+        Play Album
+      </FormButton>
     </div>
   );
 };

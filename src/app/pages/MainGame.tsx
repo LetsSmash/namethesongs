@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { TracklistRoot, Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
-import { fetchAlbumInfos, normalizeString } from "../utils";
+import { fetchAlbumInfos, fetchReleaseInfos, normalizeString } from "../utils";
 import {
   Button,
   Modal,
@@ -154,18 +154,7 @@ const MainGame = (props: { album: string }) => {
   }, []);
 
   const fetchTracklist = useCallback(async () => {
-    const { data } = await axios.get<TracklistRoot>(
-      `https://musicbrainz.org/ws/2/release/${releaseMBID}`,
-      {
-        params: {
-          fmt: "json",
-          inc: "recordings+release-groups",
-        },
-        headers: {
-          "User-Agent": "GuessTheSongs/0.1",
-        },
-      }
-    );
+    const data = await fetchReleaseInfos(releaseMBID);
     setLoaded(true);
     const albumInfos = await fetchAlbumInfos(data["release-group"].id);
     setAlbumName(albumInfos.title);
