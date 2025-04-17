@@ -52,7 +52,7 @@ Navigate to `http://localhost:3000` in your browser to see the application in ac
 - **End Game**: The game ends either when the time runs out or all songs are correctly guessed. You can also manually end the game by clicking the "Give Up" option.
 
 ## Upcoming Features
-- Guess the complete Discography instead of just one Album
+- ~~Guess the complete Discography instead of just one Album~~ Released!
 - Highscores (local and online)
 - Speedrun Mode (Counts how fast you were)
 - Multiplayer Mode (Against Friends or online)
