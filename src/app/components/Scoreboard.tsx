@@ -35,11 +35,22 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
   const { userId } = useAuth();
   const router = useRouter();
 
-  // Fetch scores and album data in one useEffect
+  useEffect(() => {
+    if (!userId) return;
+    const loadUsername = async () => {
+      try {
+        const { data } = await axios.get(`/api/getUsernameById/${userId}`);
+        setUsername(data);
+      } catch (error) {
+        console.error("Error fetching username:", error);
+        setUsername("No username available");
+      }
+    };
+    loadUsername();
+  }, [userId]);
+
   useEffect(() => {
     if (!mbid) return;
-
-    // Fetch album data
     const fetchAlbumData = async () => {
       try {
         const response = await fetchReleaseGroupFromRelease(mbid);
@@ -48,8 +59,6 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
         console.error("Error fetching album data:", error);
       }
     };
-
-    // Fetch scores
     const fetchScores = async () => {
       try {
         const scoreData = await getUserScoresByAlbum(mbid);
@@ -58,18 +67,11 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
         console.error("Error fetching scores:", error);
       }
     };
+    fetchAlbumData();
+    fetchScores();
+  }, [mbid]);
 
-    const fetchUsername = async () => {
-      try {
-        if (userId) {
-          const response = await axios.get(`/api/getUsernameById/${userId}`);
-          setUsername(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching username:", error);
-      }
-    };
-
+  useEffect(() => {
     if (albumData?.media) {
       const totalTracks = albumData.media.reduce(
         (acc, media) => acc + media["track-count"],
@@ -77,29 +79,34 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
       );
       setTrackCount(totalTracks);
     }
-
-    fetchUsername();
-    fetchAlbumData();
-    fetchScores();
-  }, [albumData?.media, mbid, trackCount, userId]);
+  }, [albumData?.media, trackCount]);
 
   return (
     <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
       <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
         {albumData?.title}
-        {albumData?.disambiguation
-          ? <div className="text-xl text-gray-600 mt-1">({albumData.disambiguation}, {trackCount} Tracks)</div>
-          : <div className="text-xl text-gray-600 mt-1">({trackCount} Tracks)</div>}
+        {albumData?.disambiguation ? (
+          <div className="text-xl text-gray-600 mt-1">
+            ({albumData.disambiguation}, {trackCount} Tracks)
+          </div>
+        ) : (
+          <div className="text-xl text-gray-600 mt-1">
+            ({trackCount} Tracks)
+          </div>
+        )}
       </h2>
       <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
-        by <span className="font-semibold text-primary">{albumData?.["artist-credit"][0].name}</span>
+        by{" "}
+        <span className="font-semibold text-primary">
+          {albumData?.["artist-credit"][0].name}
+        </span>
       </h3>
       <Table aria-label="Highscores table" className="w-full">
-        <TableHeader>
-          <TableColumn className="text-left">Rank</TableColumn>
-          <TableColumn className="text-left">User</TableColumn>
-          <TableColumn className="text-left">Score</TableColumn>
-          <TableColumn className="text-left">Time</TableColumn>
+        <TableHeader className="text-left">
+          <TableColumn>Rank</TableColumn>
+          <TableColumn>User</TableColumn>
+          <TableColumn>Score</TableColumn>
+          <TableColumn>Time</TableColumn>
         </TableHeader>
         <TableBody>
           {scores.map((score, index) => (
@@ -117,9 +124,7 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
           ))}
         </TableBody>
       </Table>
-      <FormButton
-        onPress={() => router.push(`/game/album/${mbid}`)}
-      >
+      <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
         Play Album
       </FormButton>
     </div>
