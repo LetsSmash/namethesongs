@@ -19,7 +19,7 @@ export default async function Page() {
             {albums.length !== 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
                     {albums.map((album: { mbid: string }) => (
-                        <Scoreboard key={album.mbid} mbid={album.mbid} />
+                        <Scoreboard key={album.mbid} mbid={album.mbid} mode="user" />
                     ))}
                 </div>
             ) : (

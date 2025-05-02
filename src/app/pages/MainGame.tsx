@@ -32,6 +32,7 @@ import {
   SignUpButton,
 } from "@clerk/nextjs";
 import { createScore, getScoresByAlbum } from "../actions";
+import Scoreboard from "../components/Scoreboard";
 
 interface GameState {
   releaseMBID: string;
@@ -373,38 +374,7 @@ const MainGame = (props: { album: string }) => {
                 <>
                   <ModalBody className="p-6">
                     {scores.length > 0 ? (
-                      <Table
-                        aria-label="Highscores table"
-                        className="min-w-full"
-                      >
-                        <TableHeader>
-                          <TableColumn>Rank</TableColumn>
-                          <TableColumn>User</TableColumn>
-                          <TableColumn>Score</TableColumn>
-                          <TableColumn>Time</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                          {scores.map((score, index) => (
-                            <TableRow
-                              key={index}
-                              className={index === 0 ? "bg-yellow-100" : ""}
-                            >
-                              <TableCell className="font-bold">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell>
-                                {getUsernameById(score.user_id)}
-                              </TableCell>
-                              <TableCell className="text-green-600">
-                                {score.score}
-                              </TableCell>
-                              <TableCell className="text-blue-600">
-                                {score.time}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <Scoreboard mbid={releaseMBID} />
                     ) : (
                       <p className="text-center text-gray-600 italic">
                         No one has played this album yet. Be the first to save

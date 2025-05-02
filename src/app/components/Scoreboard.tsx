@@ -26,28 +26,60 @@ interface ScoreSchema {
   score: string;
 }
 
-const Scoreboard = ({ mbid }: { mbid: string }) => {
+interface ScoreboardProps {
+  mbid: string;
+  mode?: "default" | "user";
+}
+
+const Scoreboard = ({ mbid, mode = "default" }: ScoreboardProps) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
   const [albumData, setAlbumData] = useState<Release>();
   const [username, setUsername] = useState("");
+  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
   const [trackCount, setTrackCount] = useState(0);
 
   const { userId } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!userId) return;
-    const loadUsername = async () => {
-      try {
-        const { data } = await axios.get(`/api/getUsernameById/${userId}`);
-        setUsername(data);
-      } catch (error) {
-        console.error("Error fetching username:", error);
-        setUsername("No username available");
-      }
-    };
-    loadUsername();
-  }, [userId]);
+    if (mode === "user") {
+      if (!userId) return;
+      const loadUsername = async () => {
+        try {
+          const { data } = await axios.get(`/api/getUsernameById/${userId}`);
+          setUsername(data);
+        } catch (error) {
+          console.error("Error fetching username:", error);
+          setUsername("No username available");
+        }
+      };
+      loadUsername();
+    }
+  }, [userId, mode]);
+
+  useEffect(() => {
+    if (mode === "default") {
+      const loadUserNames = async () => {
+        if (scores.length == 0) return;
+        try {
+          scores.forEach(async (score) => {
+            if (score.user_id) {
+              const { data } = await axios.get(
+                `/api/getUsernameById/${score.user_id}`
+              );
+              setUsernames((prev) => ({
+                ...prev,
+                [score.user_id]: data,
+              }));
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching usernames:", error);
+        }
+      };
+      loadUserNames();
+    }
+  }, [mode, scores]);
 
   useEffect(() => {
     if (!mbid) return;
@@ -80,6 +112,13 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
       setTrackCount(totalTracks);
     }
   }, [albumData?.media, trackCount]);
+
+  const getUsernameById = (userId: string) => {
+    if (usernames[userId]) {
+      return usernames[userId];
+    }
+    return "Loading...";
+  };
 
   return (
     <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
@@ -117,16 +156,20 @@ const Scoreboard = ({ mbid }: { mbid: string }) => {
               } hover:bg-gray-100`}
             >
               <TableCell className="font-bold">{index + 1}</TableCell>
-              <TableCell>{username}</TableCell>
+              <TableCell>
+                {mode === "user" ? username : getUsernameById(score.user_id)}
+              </TableCell>
               <TableCell className="text-green-600">{score.score}</TableCell>
               <TableCell className="text-blue-600">{score.time}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
-        Play Album
-      </FormButton>
+      {mode === "user" && (
+        <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
+          Play Album
+        </FormButton>
+      )}
     </div>
   );
 };
