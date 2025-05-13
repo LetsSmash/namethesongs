@@ -51,7 +51,7 @@ export async function getUserScoresByAlbum(mbid: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("User not found");
 
-  return await db
+  const results = await db
     .select()
     .from(scores)
     .where(and(
@@ -59,6 +59,13 @@ export async function getUserScoresByAlbum(mbid: string) {
       eq(scores.user_id, userId)
     ))
     .orderBy(desc(scores.score));
+  
+  // Sort by numeric score (extracting the number before the slash)
+  return results.sort((a, b) => {
+    const scoreA = parseInt(a.score.split('/')[0]);
+    const scoreB = parseInt(b.score.split('/')[0]);
+    return scoreB - scoreA;
+  });
 }
 
 export async function getAlbumsPlayedByUser() {

@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import FormInput from "@/app/components/FormInput";
-import Countdown, { CountdownApi } from "react-countdown";
+import Countdown from "react-countdown";
 import FormButton from "@/app/components/FormButton";
-import { useRouter, useSearchParams } from "next/navigation";
-import { TracklistRoot, Track } from "@/types/tracklist";
+import { useRouter } from "next/navigation";
+import { Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
 import { fetchAlbumInfos, fetchReleaseInfos, normalizeString } from "../utils";
@@ -16,12 +16,6 @@ import {
   ModalBody,
   ModalContent,
   ModalFooter,
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
   useDisclosure,
 } from "@nextui-org/react";
 import {
@@ -64,7 +58,7 @@ const MainGame = (props: { album: string }) => {
   const [songs, setSongs] = useState<Track[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
-  const [endTime] = useState(Date.now() + 5 * 60000);
+  const [endTime, setEndTime] = useState(0);
   const [stopped, setStopped] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -74,8 +68,8 @@ const MainGame = (props: { album: string }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restoringState, setRestoringState] = useState(false);
   const [scores, setScores] = useState<ScoreSchema[]>([]);
-  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [calculatedMinutes, setCalculatedMinutes] = useState(0);
 
   const {
     isOpen: isHighscoresOpen,
@@ -185,6 +179,8 @@ const MainGame = (props: { album: string }) => {
 
   const gameEnd = () => {
     setHasEnded(true);
+    setElapsedMinutes(calculatedMinutes);
+    setElapsedSeconds(0);
   };
 
   const stopCountdown = () => {
@@ -202,44 +198,6 @@ const MainGame = (props: { album: string }) => {
     setStopped(true);
     setHasEnded(true);
   };
-
-  const getUsernameById = (userId: string) => {
-    if (usernames[userId]) {
-      return usernames[userId];
-    }
-    return "Loading...";
-  };
-
-  const fetchUsernames = useCallback(async () => {
-    if (scores.length === 0) return;
-
-    try {
-      const promises = scores.map(async (score) => {
-        try {
-          const response = await axios.get(
-            `/api/getUsernameById/${score.user_id}`
-          );
-          return { userId: score.user_id, username: response.data };
-        } catch (error) {
-          console.error(`Error fetching username for ${score.user_id}:`, error);
-          return { userId: score.user_id, username: "Unknown User" };
-        }
-      });
-
-      const results = await Promise.all(promises);
-      const newUsernames = results.reduce(
-        (acc, { userId, username }) => {
-          acc[userId] = username;
-          return acc;
-        },
-        {} as { [key: string]: string }
-      );
-
-      setUsernames((prev) => ({ ...prev, ...newUsernames }));
-    } catch (error) {
-      console.error("Error processing usernames:", error);
-    }
-  }, [scores]);
 
   useEffect(() => {
     const restored = restoreGameState();
@@ -274,10 +232,12 @@ const MainGame = (props: { album: string }) => {
   }, [releaseMBID, scoreSaved]);
 
   useEffect(() => {
-    if (scores.length > 0) {
-      fetchUsernames();
+    if (releaseMBID && songs.length > 0) {
+      const calculatedTime = Math.max(180, songs.length * 30);
+      setEndTime(Date.now() + calculatedTime * 1000);
+      setCalculatedMinutes(Math.floor(calculatedTime / 60));
     }
-  }, [scores, fetchUsernames]);
+  }, [releaseMBID, songs.length]);
 
   return (
     <>
@@ -301,17 +261,19 @@ const MainGame = (props: { album: string }) => {
             <label htmlFor="song" className="text-left">
               Enter a Song
             </label>
-            <Countdown
-              date={endTime}
-              ref={countdownRef}
-              renderer={(props) => (
-                <p className="text-right">
-                  {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
-                  {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
-                </p>
-              )}
-              onComplete={gameEnd}
-            />
+            {endTime > 0 && (
+              <Countdown
+                date={endTime}
+                ref={countdownRef}
+                renderer={(props) => (
+                  <p className="text-right">
+                    {props.minutes < 10 ? `0${props.minutes}` : props.minutes}:
+                    {props.seconds < 10 ? `0${props.seconds}` : props.seconds}
+                  </p>
+                )}
+                onComplete={gameEnd}
+              />
+            )}
           </div>
         </>
       )}

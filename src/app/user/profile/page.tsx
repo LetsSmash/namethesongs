@@ -1,9 +1,8 @@
-import { getAlbumsPlayedByUser, getScoresByUser } from "@/app/actions";
+import { getAlbumsPlayedByUser } from "@/app/actions";
 import FormBackground from "@/app/components/FormBackground";
 import Scoreboard from "@/app/components/Scoreboard";
 import { currentUser } from "@clerk/nextjs/server";
 import { Divider } from "@nextui-org/react";
-import Image from "next/image";
 
 export default async function Page() {
     const user = await currentUser();
