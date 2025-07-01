@@ -1,4 +1,4 @@
-import {pgTable, serial, text, time, timestamp} from "drizzle-orm/pg-core";
+import {pgTable, serial, text} from "drizzle-orm/pg-core";
 
 
 export const scores = pgTable("scores", {
@@ -6,6 +6,7 @@ export const scores = pgTable("scores", {
     user_id: text("user_id").notNull(),
     mode: text("mode").notNull(),
     mbid: text("mbid").notNull(),
+    rgmbid: text("rgmbid"),
     time: text("time").notNull(),
     score: text("score").notNull(),
 })
