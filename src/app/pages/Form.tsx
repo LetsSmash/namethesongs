@@ -53,7 +53,7 @@ const Form = () => {
   const [selectedReleaseGroups, setSelectedReleaseGroups] = useState<
     Group["id"][]
   >([]);
-  const [selectedTab, setSelectedTab] = useState<Key>("album");
+  const [selectedTab, setSelectedTab] = useState<Key|null>("album");
   const [loadingTime, setLoadingTime] = useState(0);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
