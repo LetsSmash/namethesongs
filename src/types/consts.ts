@@ -3,7 +3,6 @@ export const availableSecondaryTypes = [
     'secondarytype:Interview',
     'secondarytype:Audiobook',
     'secondarytype:audiodrama',
-    'secondarytype:Live',
     'secondarytype:Remix',
     'secondarytype:DJ-mix',
     'secondarytype:Demo',
