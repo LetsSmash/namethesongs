@@ -32,7 +32,13 @@ import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
 import { availableSecondaryTypes } from "@/types/consts";
 import { fetchArtistReleaseGroups } from "../utils";
 import { Release, ReleaseRoot } from "@/types/release";
-import {SignedIn, SignedOut, SignInButton, SignUpButton, UserButton} from "@clerk/nextjs";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 const validationSchema = Yup.object({
   album: Yup.string().required("Album or EP name is required"),
@@ -53,7 +59,7 @@ const Form = () => {
   const [selectedReleaseGroups, setSelectedReleaseGroups] = useState<
     Group["id"][]
   >([]);
-  const [selectedTab, setSelectedTab] = useState<Key|null>("album");
+  const [selectedTab, setSelectedTab] = useState<Key | null>("album");
   const [loadingTime, setLoadingTime] = useState(0);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -266,19 +272,18 @@ const Form = () => {
     setSelectedReleases(initialSelectedReleases);
   }, [releaseGroupsReleases]);
 
-  
-const ProfileIcon = () => {
-  return (
+  const ProfileIcon = () => {
+    return (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z"/>
+        <path d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z" />
       </svg>
-  )
-}
+    );
+  };
 
   useEffect(() => {
     async function getReleases() {
-      const {data} = await axios.get<ReleaseRoot>(
-          `api/getReleases/${albumId}`
+      const { data } = await axios.get<ReleaseRoot>(
+        `api/getReleases/${albumId}`
       );
       setReleases(data.releases);
     }
@@ -356,7 +361,11 @@ const ProfileIcon = () => {
           <div className="flex justify-end pb-4">
             <UserButton>
               <UserButton.MenuItems>
-                <UserButton.Link href="/user/profile" label="Your Profile" labelIcon={<ProfileIcon/>}/>
+                <UserButton.Link
+                  href="/user/profile"
+                  label="Your Profile"
+                  labelIcon={<ProfileIcon />}
+                />
                 <UserButton.Action label="manageAccount" />
               </UserButton.MenuItems>
             </UserButton>
@@ -421,8 +430,8 @@ const ProfileIcon = () => {
                     {sortedAlbums.map((item) => (
                       <AutocompleteItem key={item.id} textValue={item.title}>
                         {item.title} (
-                        {item["secondary-types"]
-                          ? item["secondary-types"][0]
+                        {Array.isArray(item["secondary-types"]) && item["secondary-types"].length > 0
+                          ? `${item["secondary-types"].join("-")}-${item["primary-type"]}`
                           : item["primary-type"]}
                         ,{" "}
                         {item["first-release-date"]
@@ -481,7 +490,9 @@ const ProfileIcon = () => {
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
                                     {`${release.combinedTracks} Tracks, `}
-                                    {release["release-events"] ? `${release["release-events"][0].date})` : "No Date available)"}
+                                    {release["release-events"]
+                                      ? `${release["release-events"][0].date})`
+                                      : "No Date available)"}
                                   </Radio>
                                 ))
                               ) : (
