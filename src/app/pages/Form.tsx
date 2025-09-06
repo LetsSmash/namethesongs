@@ -55,6 +55,7 @@ const Form = () => {
   >([]);
   const [selectedTab, setSelectedTab] = useState<Key|null>("album");
   const [loadingTime, setLoadingTime] = useState(0);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -122,18 +123,37 @@ const Form = () => {
   });
 
   const loadAlbums = useCallback(
-    async ({ signal }: { signal: AbortSignal }) => {
+    async (
+      { signal }: { signal: AbortSignal },
+      { types }: { types: string[] }
+    ) => {
       if (!artistId) {
         return { items: [] };
       }
       await sleep(1000);
+      const typesQuery = (() => {
+        const defaultExcluded = [
+          ...availableSecondaryTypes,
+          "secondarytype:live",
+          "secondarytype:compilation",
+        ];
+
+        // `types` are the ones the user wants to INCLUDE, so remove them from the excluded list
+        const excluded = defaultExcluded.filter((t) => !types.includes(t));
+
+        // Ensure we always return a safe query fragment (avoid empty NOT () in the final query)
+        if (excluded.length === 0) {
+          return "secondarytype:nonexistent";
+        }
+
+        return excluded.join(" OR ");
+      })();
+
       const response = await axios.get<ReleaseGroupRoot>(
         "https://musicbrainz.org/ws/2/release-group",
         {
           params: {
-            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${availableSecondaryTypes.join(
-              " OR "
-            )})`,
+            query: `arid:${artistId} AND (primarytype:album OR primarytype:ep) AND status:official NOT (${typesQuery})`,
             limit: 100,
             fmt: "json",
           },
@@ -153,14 +173,14 @@ const Form = () => {
 
   let albumList = useAsyncList<Group>({
     async load({ signal }) {
-      return loadAlbums({ signal });
+      return loadAlbums({ signal }, { types: selectedTypes });
     },
   });
 
   useEffect(() => {
     albumList.reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId]);
+  }, [artistId, selectedTypes]);
 
   useEffect(() => {
     const getReleaseGroups = async () => {
@@ -374,6 +394,19 @@ const Form = () => {
                       </AutocompleteItem>
                     ))}
                   </Autocomplete>
+                  <CheckboxGroup
+                    value={selectedTypes}
+                    onValueChange={setSelectedTypes}
+                    orientation="horizontal"
+                    className={`mb-4 ${artistId ? "" : "hidden"}`}
+                  >
+                    <Checkbox value="secondarytype:live">
+                      Live
+                    </Checkbox>
+                    <Checkbox value="secondarytype:compilation">
+                      Compilation
+                    </Checkbox>
+                  </CheckboxGroup>
                   <Autocomplete
                     id="album"
                     name="album"
@@ -381,6 +414,9 @@ const Form = () => {
                     value={formik.values.album}
                     inputValue={albumList.filterText}
                     onInputChange={(value: string) => {
+                      if (value === "") {
+                        setArtistId("");
+                      }
                       formik.setFieldValue("album", value);
                       albumList.setFilterText(value);
                     }}
@@ -395,8 +431,9 @@ const Form = () => {
                     {sortedAlbums.map((item) => (
                       <AutocompleteItem key={item.id} textValue={item.title}>
                         {item.title} (
-                        {item["secondary-types"]
-                          ? item["secondary-types"][0]
+                        {Array.isArray(item["secondary-types"]) &&
+                        item["secondary-types"].length > 0
+                          ? `${item["secondary-types"].join("-")}-${item["primary-type"]}`
                           : item["primary-type"]}
                         ,{" "}
                         {item["first-release-date"]
