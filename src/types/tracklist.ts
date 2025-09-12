@@ -1,3 +1,5 @@
+import { ReleaseReleaseGroup } from "./release";
+
 export interface TracklistRoot {
   media: Medum[];
   quality: string;
@@ -5,7 +7,7 @@ export interface TracklistRoot {
   "status-id": string;
   disambiguation: string;
   "packaging-id": string;
-  "release-group": ReleaseGroup;
+  "release-group": ReleaseReleaseGroup;
   "text-representation": TextRepresentation;
   status: string;
   date: string;
@@ -44,17 +46,6 @@ export interface Recording {
   "first-release-date": string;
   disambiguation: string;
   video: boolean;
-}
-
-export interface ReleaseGroup {
-  "primary-type-id": string;
-  title: string;
-  "secondary-types": string[];
-  "secondary-type-ids": string[];
-  id: string;
-  "first-release-date": string;
-  "primary-type": string;
-  disambiguation: string;
 }
 
 export interface TextRepresentation {

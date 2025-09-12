@@ -12,7 +12,7 @@ export interface Release {
   country: string;
   id: string;
   "packaging-id": string;
-  "release-group": ReleaseGroup;
+  "release-group": ReleaseReleaseGroup;
   title: string;
   packaging: string;
   status: string;
@@ -65,7 +65,7 @@ export interface Medum {
   "track-count": number;
 }
 
-export interface ReleaseGroup {
+export interface ReleaseReleaseGroup {
   "primary-type-id": string;
   title: string;
   "secondary-types": string[];
