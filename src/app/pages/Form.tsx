@@ -438,7 +438,9 @@ const Form = () => {
                     orientation="horizontal"
                     className={`mb-4 ${artistId ? "" : "hidden"}`}
                   >
-                    <Checkbox value="secondarytype:live">Live</Checkbox>
+                    <Checkbox value="secondarytype:live">
+                      Live
+                    </Checkbox>
                     <Checkbox value="secondarytype:compilation">
                       Compilation
                     </Checkbox>
@@ -450,6 +452,9 @@ const Form = () => {
                     value={formik.values.album}
                     inputValue={albumList.filterText}
                     onInputChange={(value: string) => {
+                      if (value === "") {
+                        setArtistId("");
+                      }
                       formik.setFieldValue("album", value);
                       albumList.setFilterText(value);
                     }}
