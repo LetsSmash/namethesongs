@@ -104,6 +104,12 @@ const FormAlbum = () => {
     },
   });
 
+  useCallback(() => {
+    if (artistId) {
+      albumList.reload();
+    }
+  }, [artistId, albumList]);
+
   return <div>FormAlbum</div>;
 };
 

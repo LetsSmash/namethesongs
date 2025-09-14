@@ -114,3 +114,22 @@ export const getArtistInfo = async (id: string) => {
     throw error;
   }
 };
+
+export const sortAlbums = (albums: []) =>
+  albums.sort(
+    (a, b) =>
+      new Date(a["first-release-date"]).getTime() -
+      new Date(b["first-release-date"]).getTime()
+  );
+
+export const combineTracksReleases = (releases: Release[]) => releases.map((release) => {
+  const combinedTracks = release.media.reduce((acc, media) => {
+    return acc + media["track-count"];
+  }, 0);
+  return {
+    ...release,
+    combinedTracks,
+  };
+});
+
+
