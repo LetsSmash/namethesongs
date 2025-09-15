@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, use } from "react";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 import {
@@ -97,34 +97,54 @@ const FormAlbum = () => {
       if (!artistId) {
         return { items: [] };
       }
-      await sleep(1000);
+      let allReleases: Release[] = [];
+      let offset = 0;
+      const limit = 100; // MusicBrainz API limit
 
-      const { data } = await axios.get<ReleaseRoot>(
-        "https://musicbrainz.org/ws/2/release",
-        {
-          params: {
-            query: `arid:${artistId}`,
-            fmt: "json",
-          },
-          headers: {
-            "User-Agent": "GuessTheSongs/0.1",
-          },
-          signal: signal,
+      while (true) {
+        const {data, headers} = await axios.get<ReleaseRoot>(
+          "api/getReleases/" + artistId,
+          {
+            params: {
+              limit: limit,
+              offset: offset,
+            },
+            signal: signal,
+          }
+        );
+
+        allReleases = [...allReleases, ...data.releases];
+
+        if (data.releases.length < limit) {
+          break;
         }
+        
+        offset += limit;
+        await sleep(600);
+      }
+      setAllReleases(allReleases);
+      // Filter duplicate release-groups
+      const uniqueReleaseGroups = Array.from(
+        new Map(
+          allReleases.map((release) => [
+            release["release-group"].id,
+            release["release-group"],
+          ])
+        ).values()
       );
-      setAllReleases(data.releases);
 
       return {
-        items: data.releases.map((release) => release["release-group"]),
+        items: uniqueReleaseGroups,
       };
     },
   });
 
-  useCallback(() => {
+  useEffect(() => {
     if (artistId) {
       albumList.reload();
     }
-  }, [artistId, albumList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artistId, selectedTypes]);
 
   useEffect(() => {
     if (albumId) {
@@ -193,13 +213,11 @@ const FormAlbum = () => {
             name="album"
             defaultItems={albumList.items}
             value={formik.values.album}
-            inputValue={albumList.filterText}
             onInputChange={(value: string) => {
-              if (value === "") {
+              if (value == "") {
                 setArtistId("");
               }
               formik.setFieldValue("album", value);
-              albumList.setFilterText(value);
             }}
             onKeyDown={(e: any) => e.continuePropagation()}
             label="Enter an Album or an EP by that Artist"

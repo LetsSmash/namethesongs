@@ -1,21 +1,29 @@
 import axios from "axios";
 import { ReleaseRoot } from "@/types/release";
+import { type NextRequest } from 'next/server'
+
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { artist: string } }
 ) {
   const artist = params.artist;
+  const searchParams = request.nextUrl.searchParams;
+  const limit = searchParams.get("limit") || 100;
+  const offset = searchParams.get("offset") || 0;
 
   try {
     const {data, headers}  = await axios.get<ReleaseRoot>(
       "https://musicbrainz.org/ws/2/release",
       {
         params: {
-          "release-group": artist,
+          artist: artist,
           fmt: "json",
-          limit: 100,
-          inc: "media",
+          inc: "release-groups+media",
+          status: "official",
+          type: "album|ep",
+          limit: limit,
+          offset: offset,
         },
         headers: {
           "User-Agent": "GuessTheSongs/1.0.0 ( http://namethesongs.vercel.app )",
