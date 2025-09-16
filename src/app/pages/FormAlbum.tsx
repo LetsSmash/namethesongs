@@ -100,9 +100,10 @@ const FormAlbum = () => {
       let allReleases: Release[] = [];
       let offset = 0;
       const limit = 100; // MusicBrainz API limit
+      let noMoreData = false;
 
-      while (true) {
-        const {data, headers} = await axios.get<ReleaseRoot>(
+      do {
+        const { data } = await axios.get<ReleaseRoot>(
           "api/getReleases/" + artistId,
           {
             params: {
@@ -116,12 +117,12 @@ const FormAlbum = () => {
         allReleases = [...allReleases, ...data.releases];
 
         if (data.releases.length < limit) {
-          break;
+          noMoreData = true;
+        } else {
+          offset += limit;
+          await sleep(600);
         }
-        
-        offset += limit;
-        await sleep(600);
-      }
+      } while (!noMoreData)
       setAllReleases(allReleases);
       // Filter duplicate release-groups
       const uniqueReleaseGroups = Array.from(
@@ -143,8 +144,13 @@ const FormAlbum = () => {
     if (artistId) {
       albumList.reload();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistId, selectedTypes]);
+
+  useEffect(() => {
+    const rgs = albumList.items;
+    
+  }, [selectedTypes]);
 
   useEffect(() => {
     if (albumId) {
