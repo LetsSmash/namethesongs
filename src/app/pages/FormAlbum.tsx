@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, use } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 import {
@@ -38,9 +38,11 @@ const FormAlbum = () => {
   const [albumId, setAlbumId] = useState("");
   const [allReleases, setAllReleases] = useState<Release[]>([]);
   const [releases, setReleases] = useState<Release[]>([]);
+  const [allReleaseGroups, setAllReleaseGroups] = useState<ReleaseReleaseGroup[]>([]);
+  const [releaseGroups, setReleaseGroups] = useState<ReleaseReleaseGroup[]>([]);
   const [sortedReleases, setSortedReleases] = useState<Release[]>([]);
   const [selectedRelease, setSelectedRelease] = useState<Release["id"]>("");
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(["albumep"]);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -92,11 +94,12 @@ const FormAlbum = () => {
     },
   });
 
-  let albumList = useAsyncList<ReleaseReleaseGroup>({
-    async load({ signal }) {
-      if (!artistId) {
-        return { items: [] };
-      }
+  const fetchReleaseGroups = useCallback(async () => {
+    if (!artistId) {
+      return;
+    }
+    
+    try {
       let allReleases: Release[] = [];
       let offset = 0;
       const limit = 100; // MusicBrainz API limit
@@ -110,7 +113,6 @@ const FormAlbum = () => {
               limit: limit,
               offset: offset,
             },
-            signal: signal,
           }
         );
 
@@ -122,7 +124,8 @@ const FormAlbum = () => {
           offset += limit;
           await sleep(600);
         }
-      } while (!noMoreData)
+      } while (!noMoreData);
+      
       setAllReleases(allReleases);
       // Filter duplicate release-groups
       const uniqueReleaseGroups = Array.from(
@@ -133,24 +136,37 @@ const FormAlbum = () => {
           ])
         ).values()
       );
-
-      return {
-        items: uniqueReleaseGroups,
-      };
-    },
-  });
+      setAllReleaseGroups(uniqueReleaseGroups);
+    } catch (error) {
+      console.error("Error fetching release groups:", error);
+    }
+  }, [artistId]);
 
   useEffect(() => {
     if (artistId) {
-      albumList.reload();
+      fetchReleaseGroups();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artistId, selectedTypes]);
+  }, [artistId, fetchReleaseGroups]);
 
   useEffect(() => {
-    const rgs = albumList.items;
-    
-  }, [selectedTypes]);
+    const releaseGroups: ReleaseReleaseGroup[] = [];
+    if (selectedTypes.includes("albumep")){
+      releaseGroups.push(...allReleaseGroups.filter(item => (item["primary-type"] === "Album" || item["primary-type"] === "EP") && item["secondary-types"]?.length === 0));
+    }
+    if (selectedTypes.includes("live")){
+      releaseGroups.push(...allReleaseGroups.filter(item => item["secondary-types"]?.includes("Live")));
+    }
+    if (selectedTypes.includes("compilation")){
+      releaseGroups.push(...allReleaseGroups.filter(item => item["secondary-types"]?.includes("Compilation")));
+    }
+    // Just in case an album fits multiple criteria, filter duplicates
+    const unique = Array.from(
+      new Map(
+        releaseGroups.map((item) => [item.id, item])
+      ).values()
+    );
+    setReleaseGroups(unique);
+  }, [selectedTypes, allReleaseGroups]);
 
   useEffect(() => {
     if (albumId) {
@@ -161,7 +177,7 @@ const FormAlbum = () => {
     }
   }, [albumId, allReleases]);
 
-  const sortedAlbums = sortAlbums(albumList.items);
+  const sortedAlbums = sortAlbums(releaseGroups);
 
   useEffect(() => {
     setSortedReleases(filterAndSortReleases(releases));
@@ -217,11 +233,11 @@ const FormAlbum = () => {
           <Autocomplete
             id="album"
             name="album"
-            defaultItems={albumList.items}
+            defaultItems={sortedAlbums}
             value={formik.values.album}
             onInputChange={(value: string) => {
               if (value == "") {
-                setArtistId("");
+                setAlbumId("");
               }
               formik.setFieldValue("album", value);
             }}
@@ -272,6 +288,7 @@ const FormAlbum = () => {
             onOpenChange={onOpenChange}
             isDismissable={false}
             isKeyboardDismissDisabled={true}
+            scrollBehavior="inside"
           >
             <ModalContent>
               {(onClose: any) => (
@@ -294,7 +311,7 @@ const FormAlbum = () => {
                               : " ("}
                             {`${release.combinedTracks} Tracks, `}
                             {release["release-events"]
-                              ? `${release["release-events"][0].date})`
+                              ? `${release["release-events"][0].date ? release["release-events"][0].date : "No Date available"})`
                               : "No Date available)"}
                           </Radio>
                         ))
