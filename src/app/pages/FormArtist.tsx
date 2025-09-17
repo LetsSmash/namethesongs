@@ -9,7 +9,7 @@ import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import * as Yup from "yup";
-import { sleep } from "../utils";
+import { filterAndSortReleases, sleep } from "../utils";
 import { ReleaseRoot, Release, ReleaseReleaseGroup } from "@/types/release";
 
 const validationSchema = Yup.object({
@@ -19,9 +19,9 @@ const validationSchema = Yup.object({
 const FormArtist = () => {
   const [submitted, setSubmitted] = useState(false);
   const [artistId, setArtistId] = useState("");
-  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<
-    ReleaseReleaseGroup[]
-  >([]);
+  const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<Group[]>(
+    []
+  );
   const [selectedReleases, setSelectedReleases] = useState<string[]>([]);
   const [selectedReleaseGroups, setSelectedReleaseGroups] = useState<
     Group["id"][]
@@ -115,13 +115,14 @@ const FormArtist = () => {
       );
 
       // Group ReleaseGroups by Releases
-      const releaseGroupsWithReleases: ReleaseReleaseGroup[] =
-        uniqueReleaseGroups.map((rg) => {
+      const releaseGroupsWithReleases: Group[] = uniqueReleaseGroups.map(
+        (rg) => {
           const releasesForGroup = allReleases.filter(
             (release) => release["release-group"].id === rg.id
           );
           return { ...rg, releases: releasesForGroup };
-        });
+        }
+      );
       setReleaseGroupsReleases(releaseGroupsWithReleases);
     } catch (error) {
       console.error("Error fetching release groups:", error);
@@ -133,6 +134,16 @@ const FormArtist = () => {
       fetchReleaseGroups();
     }
   }, [artistId, fetchReleaseGroups]);
+
+  useEffect(() => {
+    // Filter and sort the releases inside ReleaseGroupReleases and return the release groups with the filtered and sorted releases
+    const filteredSorted: Group[] = releaseGroupsReleases
+      .map((rg) => {
+        return { ...rg, releases: filterAndSortReleases(rg.releases) };
+      }).flat();
+
+    setReleaseGroupsReleases(filteredSorted);
+  }, [releaseGroupsReleases]);
 
   return <p></p>;
 };

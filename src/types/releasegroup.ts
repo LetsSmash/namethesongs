@@ -7,14 +7,14 @@ export interface ReleaseGroupRoot {
 
 export interface Group {
   id: string;
-  "type-id": string;
-  score: number;
+  "type-id"?: string;
+  score?: number;
   "primary-type-id": string;
-  count: number;
+  count?: number;
   title: string;
   "first-release-date": string;
   "primary-type": string;
-  "artist-credit": ArtistCredit[];
+  "artist-credit"?: ArtistCredit[];
   releases: Release[];
   "secondary-types"?: string[];
   "secondary-type-ids"?: string[];

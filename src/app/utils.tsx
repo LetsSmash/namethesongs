@@ -1,7 +1,7 @@
 import { Artist, ArtistRoot } from "@/types/artist";
 import { AudioDBArtist } from "@/types/audioDB";
 import { availableSecondaryTypes } from "@/types/consts";
-import { Release, ReleaseRoot } from "@/types/release";
+import { Release, ReleaseReleaseGroup, ReleaseRoot } from "@/types/release";
 import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
 import { TracklistRoot } from "@/types/tracklist";
 import axios from "axios";
@@ -141,7 +141,7 @@ export const sortReleasesByTrackCount = (releases: Release[]) => releases.sort(
   (a, b) => (a.combinedTracks ?? 0) - (b.combinedTracks ?? 0)
 );
 
-export const filterAndSortReleases = (releases: Release[]) => {
+export const filterAndSortReleases = (releases: any[]) => {
   const withCombinedTracks = combineTracksReleases(releases);
   const uniqueTrackCountReleases = filterUniqueTrackCountReleases(withCombinedTracks);
   return sortReleasesByTrackCount(uniqueTrackCountReleases);
