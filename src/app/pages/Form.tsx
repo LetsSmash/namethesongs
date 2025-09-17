@@ -1,10 +1,7 @@
 "use client";
 
-import React, {  } from "react";
-import {
-  Tab,
-  Tabs,
-} from "@nextui-org/react";
+import React from "react";
+import { Tab, Tabs } from "@nextui-org/react";
 
 import FormBackground from "@/app/components/FormBackground";
 import {
@@ -15,6 +12,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import FormAlbum from "./FormAlbum";
+import FormArtist from "./FormArtist";
 
 const Form = () => {
   const ProfileIcon = () => {
@@ -24,7 +22,6 @@ const Form = () => {
       </svg>
     );
   };
-
 
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -49,17 +46,16 @@ const Form = () => {
             </UserButton>
           </div>
         </SignedIn>
-          <>
-              <Tabs
-                className="grid mb-3"
-              >
-                <Tab key="album" title="Album">
-                  <FormAlbum />
-                </Tab>
-                <Tab key="artist" title="Artist">
-                </Tab>
-              </Tabs>
-          </>
+        <>
+          <Tabs className="grid mb-3">
+            <Tab key="album" title="Album">
+              <FormAlbum />
+            </Tab>
+            <Tab key="artist" title="Artist">
+              <FormArtist />
+            </Tab>
+          </Tabs>
+        </>
       </FormBackground>
     </div>
   );

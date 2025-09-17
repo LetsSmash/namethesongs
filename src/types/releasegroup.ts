@@ -1,3 +1,5 @@
+import { Release } from "./release";
+
 export interface ReleaseGroupRoot {
   created: string;
   count: number;
@@ -42,11 +44,4 @@ export interface Alias {
   primary: string;
   "begin-date": string;
   "end-date": string;
-}
-
-export interface Release {
-  id: string;
-  "status-id": string;
-  title: string;
-  status: string;
 }
