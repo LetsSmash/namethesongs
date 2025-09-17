@@ -146,3 +146,6 @@ export const filterAndSortReleases = (releases: Release[]) => {
   const uniqueTrackCountReleases = filterUniqueTrackCountReleases(withCombinedTracks);
   return sortReleasesByTrackCount(uniqueTrackCountReleases);
 };
+
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+

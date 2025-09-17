@@ -24,7 +24,7 @@ import axios from "axios";
 
 import { Artist, ArtistRoot } from "@/types/artist";
 import { Release, ReleaseReleaseGroup, ReleaseRoot } from "@/types/release";
-import { filterAndSortReleases, sortAlbums } from "../utils";
+import { filterAndSortReleases, sleep, sortAlbums } from "../utils";
 import FormButton from "../components/FormButton";
 
 const validationSchema = Yup.object({
@@ -65,8 +65,6 @@ const FormAlbum = () => {
       router.push(`/game/album/${selectedRelease}`);
     }
   }, [submitted, selectedRelease, router, artistId]);
-
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   let list = useAsyncList<Artist>({
     async load({ signal, filterText }) {
