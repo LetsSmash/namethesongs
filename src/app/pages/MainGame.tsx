@@ -42,19 +42,12 @@ interface GameState {
   stopped: boolean;
 }
 
-interface ScoreSchema {
-  id: number;
-  user_id: string;
-  mode: string;
-  mbid: string;
-  time: string;
-  score: string;
-}
-
 const MainGame = (props: { album: string }) => {
   const [releaseMBID, setReleaseMBID] = useState<Release["id"]>("");
   const [albumName, setAlbumName] = useState<Group["title"]>("");
-  const [artistName, setArtistName] = useState<ArtistCredit["name"]|undefined>("");
+  const [artistName, setArtistName] = useState<
+    ArtistCredit["name"] | undefined
+  >("");
   const [songs, setSongs] = useState<Track[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
@@ -67,7 +60,6 @@ const MainGame = (props: { album: string }) => {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [restoringState, setRestoringState] = useState(false);
-  const [scores, setScores] = useState<ScoreSchema[]>([]);
   const [scoreSaved, setScoreSaved] = useState(false);
   const [calculatedMinutes, setCalculatedMinutes] = useState(0);
 
@@ -220,18 +212,6 @@ const MainGame = (props: { album: string }) => {
   }, [correctGuesses, songs]);
 
   useEffect(() => {
-    if (releaseMBID) {
-      getScoresByAlbum(releaseMBID)
-        .then((result) => {
-          setScores(result);
-        })
-        .catch((error) => {
-          console.error("Error fetching scores:", error);
-        });
-    }
-  }, [releaseMBID, scoreSaved]);
-
-  useEffect(() => {
     if (releaseMBID && songs.length > 0) {
       const calculatedTime = Math.max(180, songs.length * 30);
       setEndTime(Date.now() + calculatedTime * 1000);
@@ -335,14 +315,7 @@ const MainGame = (props: { album: string }) => {
               {(onClose) => (
                 <>
                   <ModalBody className="p-6">
-                    {scores.length > 0 ? (
-                      <Scoreboard mbid={releaseMBID} />
-                    ) : (
-                      <p className="text-center text-gray-600 italic">
-                        No one has played this album yet. Be the first to save
-                        your score!
-                      </p>
-                    )}
+                    <Scoreboard mbid={releaseMBID} />
                   </ModalBody>
                   <ModalFooter>
                     <Button onClick={onClose} color="primary">

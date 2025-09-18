@@ -121,56 +121,62 @@ const Scoreboard = ({ mbid, mode = "default" }: ScoreboardProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
-      <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
-        {albumData?.title}
-        {albumData?.disambiguation ? (
-          <div className="text-xl text-gray-600 mt-1">
-            ({albumData.disambiguation}, {trackCount} Tracks)
-          </div>
-        ) : (
-          <div className="text-xl text-gray-600 mt-1">
-            ({trackCount} Tracks)
-          </div>
-        )}
-      </h2>
-      <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
-        by{" "}
-        <span className="font-semibold text-primary">
-          {albumData?.["artist-credit"][0].name}
-        </span>
-      </h3>
-      <Table aria-label="Highscores table" className="w-full">
-        <TableHeader className="text-left">
-          <TableColumn>Rank</TableColumn>
-          <TableColumn>User</TableColumn>
-          <TableColumn>Score</TableColumn>
-          <TableColumn>Time</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {scores.map((score, index) => (
-            <TableRow
-              key={index}
-              className={`${
-                index === 0 ? "bg-yellow-100" : "bg-white"
-              } hover:bg-gray-100`}
-            >
-              <TableCell className="font-bold">{index + 1}</TableCell>
-              <TableCell>
-                {mode === "user" ? username : getUsernameById(score.user_id)}
-              </TableCell>
-              <TableCell className="text-green-600">{score.score}</TableCell>
-              <TableCell className="text-blue-600">{score.time}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {mode === "user" && (
-        <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
-          Play Album
-        </FormButton>
+    <>
+      {scores.length > 0 ? (
+        <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
+          <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
+            {albumData?.title}
+            {albumData?.disambiguation ? (
+              <div className="text-xl text-gray-600 mt-1">
+                ({albumData.disambiguation}, {trackCount} Tracks)
+              </div>
+            ) : (
+              <div className="text-xl text-gray-600 mt-1">
+                ({trackCount} Tracks)
+              </div>
+            )}
+          </h2>
+          <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
+            by{" "}
+            <span className="font-semibold text-primary">
+              {albumData?.["artist-credit"][0].name}
+            </span>
+          </h3>
+          <Table aria-label="Highscores table" className="w-full">
+            <TableHeader className="text-left">
+              <TableColumn>Rank</TableColumn>
+              <TableColumn>User</TableColumn>
+              <TableColumn>Score</TableColumn>
+              <TableColumn>Time</TableColumn>
+            </TableHeader>
+            <TableBody>
+              {scores.map((score, index) => (
+                <TableRow
+                  key={index}
+                  className={`${index === 0 ? "bg-yellow-100" : "bg-white"} hover:bg-gray-100`}
+                >
+                  <TableCell className="font-bold">{index + 1}</TableCell>
+                  <TableCell>
+                    {mode === "user" ? username : getUsernameById(score.user_id)}
+                  </TableCell>
+                  <TableCell className="text-green-600">{score.score}</TableCell>
+                  <TableCell className="text-blue-600">{score.time}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {mode === "user" && (
+            <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
+              Play Album
+            </FormButton>
+          )}
+        </div>
+      ) : (
+        <div className="text-center text-gray-600 italic">
+          No one played this album yet. Be the first to save your score!
+        </div>
       )}
-    </div>
+    </>
   );
 };
 
