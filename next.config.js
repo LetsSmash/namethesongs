@@ -6,6 +6,9 @@ module.exports = {
       },
       {
         hostname: "img.clerk.com",
+      },
+      {
+        hostname: "r2.theaudiodb.com"
       }
     ],
   },
