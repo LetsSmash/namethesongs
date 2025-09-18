@@ -31,7 +31,7 @@ import Scoreboard from "../components/Scoreboard";
 interface GameState {
   releaseMBID: string;
   albumName: string;
-  artistName: string;
+  artistName?: string;
   songs: Track[];
   correctGuesses: string[];
   remainingMinutes: number;
@@ -54,7 +54,7 @@ interface ScoreSchema {
 const MainGame = (props: { album: string }) => {
   const [releaseMBID, setReleaseMBID] = useState<Release["id"]>("");
   const [albumName, setAlbumName] = useState<Group["title"]>("");
-  const [artistName, setArtistName] = useState<ArtistCredit["name"]>("");
+  const [artistName, setArtistName] = useState<ArtistCredit["name"]|undefined>("");
   const [songs, setSongs] = useState<Track[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
@@ -153,7 +153,7 @@ const MainGame = (props: { album: string }) => {
     setLoaded(true);
     const albumInfos = await fetchAlbumInfos(data["release-group"].id);
     setAlbumName(albumInfos.title);
-    setArtistName(albumInfos["artist-credit"][0].name);
+    setArtistName(albumInfos["artist-credit"]?.[0]?.name);
     const tracklist: Track[] = data.media.flatMap((medium) => {
       return medium.tracks;
     });
