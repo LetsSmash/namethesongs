@@ -154,7 +154,6 @@ export const sortResultsNumerically = (results: ScoreSchema[]) => {
     if (!t) return Number.MAX_SAFE_INTEGER;
     const parts = t.split(":").map((p) => parseInt(p, 10));
     if (parts.some((n) => Number.isNaN(n))) return Number.MAX_SAFE_INTEGER;
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
     if (parts.length === 2) return parts[0] * 60 + parts[1];
     if (parts.length === 1) return parts[0];
     return Number.MAX_SAFE_INTEGER;
