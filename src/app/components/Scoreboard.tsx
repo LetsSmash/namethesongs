@@ -28,12 +28,14 @@ interface ScoreboardProps {
   mbid: string;
   mode?: "default" | "user";
   types?: "release" | "releasegroup";
+  showPlayButton?: boolean;
 }
 
 const Scoreboard = ({
   mbid,
   mode = "default",
   types = "release",
+  showPlayButton = false,
 }: ScoreboardProps) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
   const [albumData, setAlbumData] = useState<Release | Group>();
@@ -219,7 +221,7 @@ const Scoreboard = ({
               ))}
             </TableBody>
           </Table>
-          {mode === "user" && types === "release" && (
+          {showPlayButton && mode === "user" && types === "release" && (
             <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
               Play Album
             </FormButton>
