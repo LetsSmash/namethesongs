@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import axios from "axios";
 import FormInput from "@/app/components/FormInput";
 import Countdown from "react-countdown";
 import FormButton from "@/app/components/FormButton";
@@ -29,9 +28,9 @@ import {
   SignInButton,
   SignUpButton,
 } from "@clerk/nextjs";
-import { createScore, getScoresByAlbum } from "../actions";
+import { createScore } from "../actions";
 import Scoreboard from "../components/Scoreboard";
-import { set } from "lodash";
+import { useReward } from "react-rewards";
 
 interface GameState {
   releaseMBID: string;
@@ -88,6 +87,8 @@ const MainGame = (props: { album: string }) => {
   const router = useRouter();
 
   const countdownRef = useRef<Countdown>(null);
+
+  const { reward } = useReward("rewardId", "confetti");
 
   // This is done to keep the game state, even when the user refreshes the page (or in this case, authenticates via google)
   const saveGameState = () => {
@@ -218,6 +219,7 @@ const MainGame = (props: { album: string }) => {
   useEffect(() => {
     if (correctGuesses.length === songs.length && songs.length > 0) {
       stopCountdown();
+      reward();
     }
   }, [correctGuesses, songs]);
 
@@ -285,7 +287,8 @@ const MainGame = (props: { album: string }) => {
           </button>
         </>
       )}
-      <div>
+      <div className="flex">
+        <span id="rewardId" className="left-1/2 relative self-center" style={{width: 2, height: 2, background: "red"}}/>
         {songs.length > 0 && (
           <ul className={hasEnded ? "" : "mt-6"}>
             {songs.map((song: Track) => (

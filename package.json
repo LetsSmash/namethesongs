@@ -17,9 +17,9 @@
     "@react-stately/data": "^3.13.0",
     "@tailwindcss/forms": "^0.5.10",
     "@vercel/analytics": "^1.5.0",
+    "axios": "^1.9.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.42.0",
-    "axios": "^1.9.0",
     "formik": "^2.4.6",
     "framer-motion": "^10.18.0",
     "lodash": "^4.17.21",
@@ -27,6 +27,7 @@
     "react": "^18.3.1",
     "react-countdown": "^2.3.6",
     "react-dom": "^18.3.1",
+    "react-rewards": "^2.1.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {
