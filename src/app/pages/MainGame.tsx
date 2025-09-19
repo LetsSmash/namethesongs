@@ -16,6 +16,10 @@ import {
   ModalBody,
   ModalContent,
   ModalFooter,
+  Radio,
+  RadioGroup,
+  Tab,
+  Tabs,
   useDisclosure,
 } from "@nextui-org/react";
 import {
@@ -27,6 +31,7 @@ import {
 } from "@clerk/nextjs";
 import { createScore, getScoresByAlbum } from "../actions";
 import Scoreboard from "../components/Scoreboard";
+import { set } from "lodash";
 
 interface GameState {
   releaseMBID: string;
@@ -44,6 +49,7 @@ interface GameState {
 
 const MainGame = (props: { album: string }) => {
   const [releaseMBID, setReleaseMBID] = useState<Release["id"]>("");
+  const [releaseGroupMBID, setReleaseGroupMBID] = useState<Group["id"]>("");
   const [albumName, setAlbumName] = useState<Group["title"]>("");
   const [artistName, setArtistName] = useState<
     ArtistCredit["name"] | undefined
@@ -62,6 +68,9 @@ const MainGame = (props: { album: string }) => {
   const [restoringState, setRestoringState] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
   const [calculatedMinutes, setCalculatedMinutes] = useState(0);
+  const [selectedMode, setSelectedMode] = useState<"default" | "user">(
+    "default"
+  );
 
   const {
     isOpen: isHighscoresOpen,
@@ -144,6 +153,7 @@ const MainGame = (props: { album: string }) => {
     const data = await fetchReleaseInfos(releaseMBID);
     setLoaded(true);
     const albumInfos = await fetchAlbumInfos(data["release-group"].id);
+    setReleaseGroupMBID(data["release-group"].id);
     setAlbumName(albumInfos.title);
     setArtistName(albumInfos["artist-credit"]?.[0]?.name);
     const tracklist: Track[] = data.media.flatMap((medium) => {
@@ -315,7 +325,34 @@ const MainGame = (props: { album: string }) => {
               {(onClose) => (
                 <>
                   <ModalBody className="p-6">
-                    <Scoreboard mbid={releaseMBID} />
+                    <div className="flex justify-center">
+                      <RadioGroup
+                        value={selectedMode}
+                        onValueChange={(value) =>
+                          setSelectedMode(value as "default" | "user")
+                        }
+                        orientation="horizontal"
+                      >
+                        <Radio value="default">Global</Radio>
+                        <Radio value="user">Your Scores</Radio>
+                      </RadioGroup>
+                    </div>
+                    <Tabs className="grid">
+                      <Tab key="release" title="By Release">
+                        {selectedMode === "default" ? (
+                          <Scoreboard mbid={releaseMBID} />
+                        ) : (
+                          <Scoreboard mbid={releaseMBID} mode="user" />
+                        )}
+                      </Tab>
+                      <Tab key="releasegroup" title="By Album">
+                        {selectedMode === "default" ? (
+                          <Scoreboard mbid={releaseGroupMBID} types="releasegroup" />
+                        ) : (
+                          <Scoreboard mbid={releaseGroupMBID} mode="user" types="releasegroup" />
+                        )}
+                      </Tab>
+                    </Tabs>
                   </ModalBody>
                   <ModalFooter>
                     <Button onClick={onClose} color="primary">
@@ -332,6 +369,7 @@ const MainGame = (props: { album: string }) => {
                 createScore({
                   mode: "album",
                   mbid: releaseMBID,
+                  rgmbid: releaseGroupMBID,
                   time: `0${elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
                   score: `${correctGuesses.length} / ${songs.length}`,
                 });
@@ -353,32 +391,36 @@ const MainGame = (props: { album: string }) => {
             className="bg-white rounded-lg shadow-xl"
           >
             <ModalContent>
-              <ModalBody className="p-6">
-                <SignedOut>
-                  <SignInButton />
-                  <SignUpButton />
-                </SignedOut>
-                <SignedIn>
-                  {scoreSaved ? (
-                    <p className="text-lg font-semibold text-green-600">
-                      Score successfully saved!
-                    </p>
-                  ) : (
-                    <p className="text-lg font-semibold text-red-600">
-                      You already saved your score!
-                    </p>
-                  )}
-                </SignedIn>
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  onClick={() => router.push("/")}
-                  color="primary"
-                  className="w-full"
-                >
-                  Return to Main Menu
-                </Button>
-              </ModalFooter>
+              {(onClose) => (
+                <>
+                  <ModalBody className="p-6">
+                    <SignedOut>
+                      <SignInButton />
+                      <SignUpButton />
+                    </SignedOut>
+                    <SignedIn>
+                      {scoreSaved ? (
+                        <p className="text-lg font-semibold text-green-600">
+                          Score successfully saved!
+                        </p>
+                      ) : (
+                        <p className="text-lg font-semibold text-red-600">
+                          You already saved your score!
+                        </p>
+                      )}
+                    </SignedIn>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      onClick={onClose}
+                      color="primary"
+                      className="w-full"
+                    >
+                      Close
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
             </ModalContent>
           </Modal>
         </div>

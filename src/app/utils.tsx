@@ -1,8 +1,8 @@
-import { Artist, ArtistRoot } from "@/types/artist";
-import { AudioDBArtist } from "@/types/audioDB";
+import { Artist } from "@/types/artist";
 import { availableSecondaryTypes } from "@/types/consts";
 import { Release, ReleaseReleaseGroup, ReleaseRoot } from "@/types/release";
 import { Group, ReleaseGroupRoot } from "@/types/releasegroup";
+import { ScoreSchema } from "@/types/score";
 import { TracklistRoot } from "@/types/tracklist";
 import axios from "axios";
 
@@ -149,3 +149,24 @@ export const filterAndSortReleases = (releases: any[]) => {
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export const sortResultsNumerically = (results: ScoreSchema[]) => {
+  const timeToSeconds = (t: string) => {
+    if (!t) return Number.MAX_SAFE_INTEGER;
+    const parts = t.split(":").map((p) => parseInt(p, 10));
+    if (parts.some((n) => Number.isNaN(n))) return Number.MAX_SAFE_INTEGER;
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 1) return parts[0];
+    return Number.MAX_SAFE_INTEGER;
+  };
+
+  return [...results].sort((a, b) => {
+    const scoreA = parseInt(a.score.split("/")[0]);
+    const scoreB = parseInt(b.score.split("/")[0]);
+    if (scoreB !== scoreA) return scoreB - scoreA; // higher score first
+
+    const timeA = timeToSeconds(a.time);
+    const timeB = timeToSeconds(b.time);
+    return timeA - timeB; // lower time first on tie
+  });
+};

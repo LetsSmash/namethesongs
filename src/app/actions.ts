@@ -4,15 +4,18 @@ import { auth } from "@clerk/nextjs/server";
 import { scores } from "@/db/schema";
 import { db } from "@/db/drizzle";
 import { eq, desc, and } from "drizzle-orm";
+import { sortResultsNumerically } from "./utils";
 
 export async function createScore({
   mode,
   mbid,
+  rgmbid,
   time,
   score,
 }: {
   mode: string;
   mbid: string;
+  rgmbid: string;
   time: string;
   score: string;
 }) {
@@ -23,28 +26,33 @@ export async function createScore({
     user_id: userId,
     mode,
     mbid,
+    rgmbid,
     time,
     score,
   });
 }
 
 export async function getScoresByAlbum(mbid: string) {
-  return await db
+  const results = await db
     .select()
     .from(scores)
     .where(eq(scores.mbid, mbid))
     .orderBy(desc(scores.score));
+
+  return sortResultsNumerically(results);
 }
 
 export async function getScoresByUser() {
   const { userId } = await auth();
   if (!userId) throw new Error("User not found");
 
-  return await db
+  const results = await db
     .select()
     .from(scores)
     .where(eq(scores.user_id, userId))
     .orderBy(desc(scores.score));
+    
+  return sortResultsNumerically(results);
 }
 
 export async function getUserScoresByAlbum(mbid: string) {
@@ -59,13 +67,8 @@ export async function getUserScoresByAlbum(mbid: string) {
       eq(scores.user_id, userId)
     ))
     .orderBy(desc(scores.score));
-  
-  // Sort by numeric score (extracting the number before the slash)
-  return results.sort((a, b) => {
-    const scoreA = parseInt(a.score.split('/')[0]);
-    const scoreB = parseInt(b.score.split('/')[0]);
-    return scoreB - scoreA;
-  });
+
+  return sortResultsNumerically(results);
 }
 
 export async function getAlbumsPlayedByUser() {
@@ -77,4 +80,30 @@ export async function getAlbumsPlayedByUser() {
     .from(scores)
     .where(eq(scores.user_id, userId))
     .groupBy(scores.mbid);
+}
+
+export async function getUserScoresByReleaseGroup(rgmbid: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("User not found");
+
+  const results = await db
+    .select()
+    .from(scores)
+    .where(and(
+      eq(scores.rgmbid, rgmbid),
+      eq(scores.user_id, userId)
+    ))
+    .orderBy(desc(scores.score));
+
+  return sortResultsNumerically(results);
+}
+
+export async function getScoresByReleaseGroup(rgmbid: string) {
+  const results = await db
+    .select()
+    .from(scores)
+    .where(eq(scores.rgmbid, rgmbid))
+    .orderBy(desc(scores.score));
+
+  return sortResultsNumerically(results);
 }

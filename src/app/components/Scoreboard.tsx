@@ -8,138 +8,186 @@ import {
   TableRow,
   TableCell,
 } from "@nextui-org/react";
-import { useState, useEffect, useCallback } from "react";
-import { getUserScoresByAlbum } from "@/app/actions";
+import { useEffect, useState } from "react";
+import {
+  getScoresByAlbum,
+  getScoresByReleaseGroup,
+  getUserScoresByAlbum,
+  getUserScoresByReleaseGroup,
+} from "@/app/actions";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
-import { fetchReleaseGroupFromRelease } from "@/app/utils";
+import { fetchAlbumInfos, fetchReleaseGroupFromRelease } from "@/app/utils";
 import { Release } from "../../types/release";
-import FormButton from "./FormButton";
+import { Group } from "../../types/releasegroup";
 import { useRouter } from "next/navigation";
-
-interface ScoreSchema {
-  id: number;
-  user_id: string;
-  mode: string;
-  mbid: string;
-  time: string;
-  score: string;
-}
+import FormButton from "./FormButton";
+import { ScoreSchema } from "@/types/score";
 
 interface ScoreboardProps {
   mbid: string;
   mode?: "default" | "user";
+  types?: "release" | "releasegroup";
 }
 
-const Scoreboard = ({ mbid, mode = "default" }: ScoreboardProps) => {
+const Scoreboard = ({
+  mbid,
+  mode = "default",
+  types = "release",
+}: ScoreboardProps) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
-  const [albumData, setAlbumData] = useState<Release>();
+  const [albumData, setAlbumData] = useState<Release | Group>();
   const [username, setUsername] = useState("");
-  const [usernames, setUsernames] = useState<{ [key: string]: string }>({});
+  const [usernames, setUsernames] = useState<Record<string, string>>({});
   const [trackCount, setTrackCount] = useState(0);
 
   const { userId } = useAuth();
   const router = useRouter();
 
+  // Load current user's username in "user" mode
   useEffect(() => {
-    if (mode === "user") {
-      if (!userId) return;
-      const loadUsername = async () => {
-        try {
-          const { data } = await axios.get(`/api/getUsernameById/${userId}`);
-          setUsername(data);
-        } catch (error) {
-          console.error("Error fetching username:", error);
-          setUsername("No username available");
-        }
-      };
-      loadUsername();
-    }
-  }, [userId, mode]);
+    if (mode !== "user" || !userId) return;
+    const loadUsername = async () => {
+      try {
+        const { data } = await axios.get(`/api/getUsernameById/${userId}`);
+        setUsername(data);
+      } catch (err) {
+        console.error("Error fetching username:", err);
+        setUsername("No username available");
+      }
+    };
+    loadUsername();
+  }, [mode, userId]);
 
+  // Load usernames for scoreboard rows in "default" mode
   useEffect(() => {
-    if (mode === "default") {
-      const loadUserNames = async () => {
-        if (scores.length == 0) return;
-        try {
-          scores.forEach(async (score) => {
-            if (score.user_id) {
-              const { data } = await axios.get(
-                `/api/getUsernameById/${score.user_id}`
-              );
-              setUsernames((prev) => ({
-                ...prev,
-                [score.user_id]: data,
-              }));
+    if (mode !== "default" || scores.length === 0) return;
+
+    const missingIds = Array.from(
+      new Set(
+        scores
+          .map((s) => s.user_id)
+          .filter((id): id is string => !!id && !usernames[id])
+      )
+    );
+
+    if (missingIds.length === 0) return;
+
+    const loadUsernames = async () => {
+      try {
+        const pairs = await Promise.all(
+          missingIds.map(async (id) => {
+            try {
+              const { data } = await axios.get(`/api/getUsernameById/${id}`);
+              return [id, data] as const;
+            } catch {
+              return [id, "Unknown"] as const;
             }
-          });
-        } catch (error) {
-          console.error("Error fetching usernames:", error);
-        }
-      };
-      loadUserNames();
-    }
-  }, [mode, scores]);
+          })
+        );
+        setUsernames((prev) => {
+          const next = { ...prev };
+          for (const [id, name] of pairs) next[id] = name;
+          return next;
+        });
+      } catch (err) {
+        console.error("Error fetching usernames:", err);
+      }
+    };
 
+    loadUsernames();
+  }, [mode, scores, usernames]);
+
+  // Fetch album/group data and scores
   useEffect(() => {
     if (!mbid) return;
+
     const fetchAlbumData = async () => {
       try {
-        const response = await fetchReleaseGroupFromRelease(mbid);
-        setAlbumData(response);
-      } catch (error) {
-        console.error("Error fetching album data:", error);
+        if (types === "release") {
+          const response = await fetchReleaseGroupFromRelease(mbid);
+          setAlbumData(response);
+        } else {
+          const response = await fetchAlbumInfos(mbid);
+          setAlbumData(response);
+        }
+      } catch (err) {
+        console.error("Error fetching album data:", err);
       }
     };
+
     const fetchScores = async () => {
       try {
-        const scoreData = await getUserScoresByAlbum(mbid);
-        setScores(scoreData);
-      } catch (error) {
-        console.error("Error fetching scores:", error);
+        if (mode === "user") {
+          if (types === "release") {
+            const scoreData = await getUserScoresByAlbum(mbid);
+            setScores(scoreData);
+          } else {
+            const scoreData = await getUserScoresByReleaseGroup(mbid);
+            setScores(scoreData);
+          }
+        } else {
+          if (types === "release") {
+            const scoreData = await getScoresByAlbum(mbid);
+            setScores(scoreData);
+          } else {
+            const scoreData = await getScoresByReleaseGroup(mbid);
+            setScores(scoreData);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching scores:", err);
+        setScores([]);
       }
     };
+
     fetchAlbumData();
     fetchScores();
-  }, [mbid]);
+  }, [mbid, types, mode]);
 
+  // Compute track count
   useEffect(() => {
-    if (albumData?.media) {
-      const totalTracks = albumData.media.reduce(
-        (acc, media) => acc + media["track-count"],
-        0
-      );
-      setTrackCount(totalTracks);
-    }
-  }, [albumData?.media, trackCount]);
+    if (!albumData) return;
 
-  const getUsernameById = (userId: string) => {
-    if (usernames[userId]) {
-      return usernames[userId];
+    if ("media" in albumData && Array.isArray(albumData.media)) {
+      const totalTracks = albumData.media.reduce((acc, media: any) => {
+        const n = Number(media?.["track-count"] ?? 0);
+        return acc + (Number.isFinite(n) ? n : 0);
+      }, 0 as number);
+      setTrackCount(totalTracks);
+    } else {
+      // For release groups or if media is not present, don't show track count
+      setTrackCount(0);
     }
-    return "Loading...";
-  };
+  }, [albumData]);
+
+  const getUsernameById = (id: string) => usernames[id] ?? "Loading...";
+
+  // Build details line: show disambiguation and track count (only if > 0)
+  const details: string[] = [];
+  const disambiguation = (albumData as any)?.disambiguation;
+  if (disambiguation) details.push(disambiguation);
+  if (trackCount > 0) details.push(`${trackCount} Tracks`);
 
   return (
     <>
       {scores.length > 0 ? (
         <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
           <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
-            {albumData?.title}
-            {albumData?.disambiguation ? (
+            {albumData && (albumData as any).title}
+            {details.length > 0 && (
               <div className="text-xl text-gray-600 mt-1">
-                ({albumData.disambiguation}, {trackCount} Tracks)
-              </div>
-            ) : (
-              <div className="text-xl text-gray-600 mt-1">
-                ({trackCount} Tracks)
+                ({details.join(", ")})
               </div>
             )}
           </h2>
           <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
             by{" "}
             <span className="font-semibold text-primary">
-              {albumData?.["artist-credit"][0].name}
+              {albumData &&
+                "artist-credit" in (albumData as any) &&
+                Array.isArray((albumData as any)["artist-credit"]) &&
+                (albumData as any)["artist-credit"][0]?.name}
             </span>
           </h3>
           <Table aria-label="Highscores table" className="w-full">
@@ -152,20 +200,26 @@ const Scoreboard = ({ mbid, mode = "default" }: ScoreboardProps) => {
             <TableBody>
               {scores.map((score, index) => (
                 <TableRow
-                  key={index}
-                  className={`${index === 0 ? "bg-yellow-100" : "bg-white"} hover:bg-gray-100`}
+                  key={score.id ?? index}
+                  className={`${
+                    index === 0 ? "bg-yellow-100" : "bg-white"
+                  } hover:bg-gray-100`}
                 >
                   <TableCell className="font-bold">{index + 1}</TableCell>
                   <TableCell>
-                    {mode === "user" ? username : getUsernameById(score.user_id)}
+                    {mode === "user"
+                      ? username
+                      : getUsernameById(score.user_id)}
                   </TableCell>
-                  <TableCell className="text-green-600">{score.score}</TableCell>
+                  <TableCell className="text-green-600">
+                    {score.score}
+                  </TableCell>
                   <TableCell className="text-blue-600">{score.time}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          {mode === "user" && (
+          {mode === "user" && types === "release" && (
             <FormButton onPress={() => router.push(`/game/album/${mbid}`)}>
               Play Album
             </FormButton>
