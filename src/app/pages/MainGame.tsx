@@ -193,7 +193,7 @@ const MainGame = (props: { album: string }) => {
       const remainingSeconds = countdownRef.current.getRenderProps().seconds;
       setRemainingMinutes(remainingMinutes);
       setRemainingSeconds(remainingSeconds);
-      setElapsedMinutes(4 - remainingMinutes);
+      setElapsedMinutes(calculatedMinutes - remainingMinutes);
       setElapsedSeconds(
         remainingMinutes === 0 ? 60 - remainingSeconds : 59 - remainingSeconds
       );
@@ -373,7 +373,7 @@ const MainGame = (props: { album: string }) => {
                   mode: "album",
                   mbid: releaseMBID,
                   rgmbid: releaseGroupMBID,
-                  time: `0${elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
+                  time: `${elapsedMinutes < 10 ? `0${elapsedMinutes}` : elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
                   score: `${correctGuesses.length} / ${songs.length}`,
                 });
                 setScoreSaved(true);
