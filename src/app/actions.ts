@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { scores } from "@/db/schema";
+import { artistConfigurations, artistScores, scores } from "@/db/schema";
 import { db } from "@/db/drizzle";
 import { eq, desc, and } from "drizzle-orm";
 import { sortResultsNumerically } from "./utils";
@@ -32,6 +32,43 @@ export async function createScore({
   });
 }
 
+export async function createConfiguration({
+  mbid,
+  config
+}: {
+  mbid: string;
+  config: string;
+}) {
+
+  await db.insert(artistConfigurations).values({
+    mbid,
+    config,
+  });
+}
+
+export async function createArtistScore({
+  time,
+  score,
+  mbid,
+  configId
+}: {
+  time: string;
+  score: string;
+  mbid: string;
+  configId: number;
+}) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("User not found");
+
+  await db.insert(artistScores).values({
+    user_id: userId,
+    time,
+    score,
+    mbid,
+    configId,
+  });
+}
+
 export async function getScoresByAlbum(mbid: string) {
   const results = await db
     .select()
@@ -51,7 +88,7 @@ export async function getScoresByUser() {
     .from(scores)
     .where(eq(scores.user_id, userId))
     .orderBy(desc(scores.score));
-    
+
   return sortResultsNumerically(results);
 }
 
@@ -106,4 +143,20 @@ export async function getScoresByReleaseGroup(rgmbid: string) {
     .orderBy(desc(scores.score));
 
   return sortResultsNumerically(results);
+}
+
+export async function getConfigurationId(config: string) {
+  return await db
+    .select({ id: artistConfigurations.id })
+    .from(artistConfigurations)
+    .where(eq(artistConfigurations.config, config))
+    .limit(1);
+}
+
+export async function getLastConfigurationId() {
+  return await db
+    .select({ id: artistConfigurations.id })
+    .from(artistConfigurations)
+    .orderBy(desc(artistConfigurations.id))
+    .limit(1);
 }
