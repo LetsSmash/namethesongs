@@ -6,4 +6,5 @@ export interface ScoreSchema {
   mbid: string;
   time: string;
   score: string;
+  config?: string;
 }

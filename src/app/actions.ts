@@ -160,3 +160,65 @@ export async function getLastConfigurationId() {
     .orderBy(desc(artistConfigurations.id))
     .limit(1);
 }
+
+export async function getArtistScoresByMbid(mbid: string) {
+  const results = await db
+    .select({
+      id: artistScores.id,
+      user_id: artistScores.user_id,
+      time: artistScores.time,
+      score: artistScores.score,
+      mbid: artistScores.mbid,
+      configId: artistScores.configId,
+      config: artistConfigurations.config,
+    })
+    .from(artistScores)
+    .leftJoin(artistConfigurations, eq(artistScores.configId, artistConfigurations.id))
+    .where(eq(artistScores.mbid, mbid))
+    .orderBy(desc(artistScores.score));
+
+  return sortResultsNumerically(results.map(r => ({
+    id: r.id,
+    user_id: r.user_id,
+    time: r.time,
+    score: r.score,
+    mbid: r.mbid,
+    mode: 'artist',
+    rgmbid: '',
+    config: r.config || '',
+  })));
+}
+
+export async function getUserArtistScoresByMbid(mbid: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("User not found");
+
+  const results = await db
+    .select({
+      id: artistScores.id,
+      user_id: artistScores.user_id,
+      time: artistScores.time,
+      score: artistScores.score,
+      mbid: artistScores.mbid,
+      configId: artistScores.configId,
+      config: artistConfigurations.config,
+    })
+    .from(artistScores)
+    .leftJoin(artistConfigurations, eq(artistScores.configId, artistConfigurations.id))
+    .where(and(
+      eq(artistScores.mbid, mbid),
+      eq(artistScores.user_id, userId)
+    ))
+    .orderBy(desc(artistScores.score));
+
+  return sortResultsNumerically(results.map(r => ({
+    id: r.id,
+    user_id: r.user_id,
+    time: r.time,
+    score: r.score,
+    mbid: r.mbid,
+    mode: 'artist',
+    rgmbid: '',
+    config: r.config || '',
+  })));
+}

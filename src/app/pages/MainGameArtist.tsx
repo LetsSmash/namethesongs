@@ -3,12 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchReleaseInfos, normalizeString } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
-import { Button, Card, CardHeader, Divider } from "@nextui-org/react";
+import { Button, Card, CardHeader, Divider, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup, useDisclosure } from "@nextui-org/react";
 import FormInput from "../components/FormInput";
 import Image from "next/image";
 import axios from "axios";
 import Countdown from "react-countdown";
 import { notFound, useRouter } from "next/navigation";
+import { createArtistScore, createConfiguration, getConfigurationId, getLastConfigurationId } from "../actions";
+import ArtistScoreboard from "../components/ArtistScoreboard";
+import {
+  SignedOut,
+  SignedIn,
+  useAuth,
+  SignInButton,
+  SignUpButton,
+} from "@clerk/nextjs";
 
 const MainGameArtist = (props: { artist: string }) => {
   const [releaseIDs, setReleaseIDs] = useState<string[]>([]);
@@ -20,9 +29,18 @@ const MainGameArtist = (props: { artist: string }) => {
   const [hasEnded, setHasEnded] = useState(false);
   const [endTime] = useState(Date.now() + 20 * 60000);
   const [hasReleases, setHasReleases] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<"default" | "user">("default");
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   const countdownRef = useRef<Countdown>(null);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const {
+    isOpen: isSaveScoreOpen,
+    onOpen: onSaveScoreOpen,
+    onOpenChange: onSaveScoreOpenChange,
+  } = useDisclosure();
 
+  const { isSignedIn } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -119,6 +137,48 @@ const MainGameArtist = (props: { artist: string }) => {
       countdownRef.current.pause();
     }
     setHasEnded(true);
+  };
+
+  const saveScore = async () => {
+    if (scoreSaved) return;
+
+    const elapsedTime = 20 * 60000 - (endTime - Date.now());
+    const minutes = Math.floor(elapsedTime / 60000);
+    const seconds = Math.floor((elapsedTime % 60000) / 1000);
+    const timeString = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    const scoreString = `${correctGuesses.length}/${songs.length}`;
+
+    try {
+      const configString = JSON.stringify(releaseIDs);
+      
+      // Check if configuration already exists
+      const existingConfig = await getConfigurationId(configString);
+      let configId: number;
+
+      if (existingConfig.length > 0) {
+        configId = existingConfig[0].id;
+      } else {
+        // Create new configuration
+        await createConfiguration({
+          mbid: props.artist,
+          config: configString,
+        });
+        const newConfig = await getLastConfigurationId();
+        configId = newConfig[0].id;
+      }
+
+      // Save the score
+      await createArtistScore({
+        time: timeString,
+        score: scoreString,
+        mbid: props.artist,
+        configId,
+      });
+
+      setScoreSaved(true);
+    } catch (error) {
+      console.error("Error saving score:", error);
+    }
   };
 
   useEffect(() => {
@@ -230,14 +290,101 @@ const MainGameArtist = (props: { artist: string }) => {
             ))}
           </div>
           {hasEnded && (
-            <div className="flex justify-center">
-              <Button color="primary" style={{width: 381}} onClick={() => {router.push("/")}}>
-                Try with another artist 
+            <div className="flex flex-col items-center gap-2 mt-4">
+              <div className="flex gap-4">
+                <Button color="secondary" style={{width: 190}} onClick={onOpen}>
+                  View Scoreboard
+                </Button>
+                <Button color="primary" style={{width: 190}} onClick={() => {router.push("/")}}>
+                  Try Another Artist 
+                </Button>
+              </div>
+              <Button
+                onPress={async () => {
+                  if (isSignedIn && !scoreSaved) {
+                    await saveScore();
+                  }
+                  onSaveScoreOpen();
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white"
+                style={{width: 384}}
+              >
+                Save Score
               </Button>
             </div>
           )}
         </>
       )}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" scrollBehavior="inside">
+        <ModalContent>
+          {() => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Artist Scoreboard
+              </ModalHeader>
+              <ModalBody className="p-6">
+                <div className="flex justify-center">
+                  <RadioGroup
+                    value={selectedMode}
+                    onValueChange={(value) =>
+                      setSelectedMode(value as "default" | "user")
+                    }
+                    orientation="horizontal"
+                  >
+                    <Radio value="default">Global</Radio>
+                    <Radio value="user" className={!isSignedIn ? "hidden" : ""}>Your Scores</Radio>
+                  </RadioGroup>
+                </div>
+                {selectedMode === "default" ? (
+                  <ArtistScoreboard mbid={props.artist} />
+                ) : (
+                  <ArtistScoreboard mbid={props.artist} mode="user" />
+                )}
+              </ModalBody>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+      <Modal
+        isOpen={isSaveScoreOpen}
+        onOpenChange={onSaveScoreOpenChange}
+        isDismissable={false}
+        isKeyboardDismissDisabled={true}
+        className="bg-white rounded-lg shadow-xl"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalBody className="p-6">
+                <SignedOut>
+                  <SignInButton />
+                  <SignUpButton />
+                </SignedOut>
+                <SignedIn>
+                  {scoreSaved ? (
+                    <p className="text-lg font-semibold text-green-600">
+                      Score successfully saved!
+                    </p>
+                  ) : (
+                    <p className="text-lg font-semibold text-red-600">
+                      You already saved your score!
+                    </p>
+                  )}
+                </SignedIn>
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  onClick={onClose}
+                  color="primary"
+                  className="w-full"
+                >
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </>
   );
 };
