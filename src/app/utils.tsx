@@ -169,3 +169,41 @@ export const sortResultsNumerically = (results: ScoreSchema[]) => {
     return timeA - timeB; // lower time first on tie
   });
 };
+
+export const saveGameState = <T extends Record<string, any>>(
+  key: string,
+  state: T
+) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+    localStorage.setItem(`${key}Timestamp`, Date.now().toString());
+  } catch (error) {
+    console.error("Error saving game state:", error);
+  }
+};
+
+export const restoreGameState = <T extends Record<string, any>>(
+  key: string,
+  maxAgeMs: number = 10 * 60 * 1000
+): T | null => {
+  try {
+    const savedState = localStorage.getItem(key);
+    const timestamp = localStorage.getItem(`${key}Timestamp`);
+
+    if (savedState && timestamp) {
+      const now = Date.now();
+      const savedTime = parseInt(timestamp);
+
+      if (now - savedTime < maxAgeMs) {
+        localStorage.removeItem(key);
+        localStorage.removeItem(`${key}Timestamp`);
+        return JSON.parse(savedState) as T;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error restoring game state:", error);
+    return null;
+  }
+};

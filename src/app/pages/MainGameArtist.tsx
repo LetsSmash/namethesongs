@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { fetchReleaseInfos, normalizeString } from "../utils";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchReleaseInfos, normalizeString, saveGameState as saveGameStateUtil, restoreGameState as restoreGameStateUtil } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import { Button, Card, CardHeader, Divider, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup, useDisclosure } from "@nextui-org/react";
-import FormInput from "../components/FormInput";
+import FormInput from "@/app/components/FormInput";
 import Image from "next/image";
 import axios from "axios";
 import Countdown from "react-countdown";
 import { notFound, useRouter } from "next/navigation";
 import { createArtistScore, createConfiguration, getConfigurationId, getLastConfigurationId } from "../actions";
-import ArtistScoreboard from "../components/ArtistScoreboard";
+import Scoreboard from "@/app/components/Scoreboard"
 import {
   SignedOut,
   SignedIn,
@@ -31,6 +31,7 @@ const MainGameArtist = (props: { artist: string }) => {
   const [hasReleases, setHasReleases] = useState(false);
   const [selectedMode, setSelectedMode] = useState<"default" | "user">("default");
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [restoringState, setRestoringState] = useState(false);
 
   const countdownRef = useRef<Countdown>(null);
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -42,6 +43,42 @@ const MainGameArtist = (props: { artist: string }) => {
 
   const { isSignedIn } = useAuth();
   const router = useRouter();
+
+  interface ArtistGameState {
+    artistMBID: string;
+    releaseIDs: string[];
+    correctGuesses: string[];
+    hasEnded: boolean;
+    scoreSaved: boolean;
+  }
+
+  const saveGameState = () => {
+    const gameState: ArtistGameState = {
+      artistMBID: props.artist,
+      releaseIDs,
+      correctGuesses,
+      hasEnded,
+      scoreSaved,
+    };
+
+    saveGameStateUtil("artistGameState", gameState);
+  };
+
+  const restoreGameState = useCallback(() => {
+    const gameState = restoreGameStateUtil<ArtistGameState>("artistGameState");
+
+    if (gameState && gameState.artistMBID === props.artist) {
+      setReleaseIDs(gameState.releaseIDs);
+      setCorrectGuesses(gameState.correctGuesses);
+      setHasEnded(gameState.hasEnded);
+      setScoreSaved(gameState.scoreSaved);
+      setHasReleases(true);
+      setRestoringState(true);
+      return true;
+    }
+
+    return false;
+  }, [props.artist]);
 
   useEffect(() => {
     const fetchLogo = async () => {
@@ -64,16 +101,20 @@ const MainGameArtist = (props: { artist: string }) => {
   }, [props.artist]);
 
   useEffect(() => {
-    const storedReleases = localStorage.getItem("releases");
-    if (storedReleases && storedReleases !== "[]") {
-      const parsedReleases = JSON.parse(storedReleases);
-      setHasReleases(true);
-      setReleaseIDs(parsedReleases);
-    } else {
-      alert("You need to select some albums first!");
-      notFound();
+    const restored = restoreGameState();
+
+    if (!restored) {
+      const storedReleases = localStorage.getItem("releases");
+      if (storedReleases && storedReleases !== "[]") {
+        const parsedReleases = JSON.parse(storedReleases);
+        setHasReleases(true);
+        setReleaseIDs(parsedReleases);
+      } else {
+        alert("You need to select some albums first!");
+        notFound();
+      }
     }
-  }, []);
+  }, [restoreGameState]);
 
   useEffect(() => {
     const fetchAllReleases = async () => {
@@ -92,10 +133,10 @@ const MainGameArtist = (props: { artist: string }) => {
       }
     };
 
-    if (releaseIDs.length > 0 && releases.length === 0) {
+    if (releaseIDs.length > 0 && releases.length === 0 && !restoringState) {
       fetchAllReleases();
     }
-  }, [releaseIDs, releases.length]);
+  }, [releaseIDs, releases.length, restoringState]);
 
   useEffect(() => {
     if (releases.length > 0) {
@@ -108,8 +149,12 @@ const MainGameArtist = (props: { artist: string }) => {
       );
       const uniqueNormalizedTitles = Array.from(new Set(normalizedTitles));
       setSongs(uniqueNormalizedTitles);
+      
+      if (restoringState) {
+        setRestoringState(false);
+      }
     }
-  }, [releases]);
+  }, [releases, restoringState]);
 
   const sortedAlbums = releases.sort((a, b) => {
     return (
@@ -303,6 +348,8 @@ const MainGameArtist = (props: { artist: string }) => {
                 onPress={async () => {
                   if (isSignedIn && !scoreSaved) {
                     await saveScore();
+                  } else if (!isSignedIn) {
+                    saveGameState();
                   }
                   onSaveScoreOpen();
                 }}
@@ -336,9 +383,9 @@ const MainGameArtist = (props: { artist: string }) => {
                   </RadioGroup>
                 </div>
                 {selectedMode === "default" ? (
-                  <ArtistScoreboard mbid={props.artist} />
+                  <Scoreboard mbid={props.artist} types="artist" />
                 ) : (
-                  <ArtistScoreboard mbid={props.artist} mode="user" />
+                  <Scoreboard mbid={props.artist} mode="user" types="artist" showPlayButton={false}/>
                 )}
               </ModalBody>
             </>
@@ -361,7 +408,7 @@ const MainGameArtist = (props: { artist: string }) => {
                   <SignUpButton />
                 </SignedOut>
                 <SignedIn>
-                  {scoreSaved ? (
+                  {!scoreSaved ? (
                     <p className="text-lg font-semibold text-green-600">
                       Score successfully saved!
                     </p>

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
-import { fetchAlbumInfos, fetchReleaseInfos, normalizeString } from "../utils";
+import { fetchAlbumInfos, fetchReleaseInfos, normalizeString, saveGameState as saveGameStateUtil, restoreGameState as restoreGameStateUtil } from "../utils";
 import {
   Button,
   Modal,
@@ -106,48 +106,30 @@ const MainGame = (props: { album: string }) => {
       stopped,
     };
 
-    localStorage.setItem("gameState", JSON.stringify(gameState));
-    localStorage.setItem("gameStateTimestamp", Date.now().toString());
+    saveGameStateUtil("gameState", gameState);
   };
 
   const restoreGameState = useCallback(() => {
-    try {
-      const savedState = localStorage.getItem("gameState");
-      const timestamp = localStorage.getItem("gameStateTimestamp");
+    const gameState = restoreGameStateUtil<GameState>("gameState");
 
-      if (savedState && timestamp) {
-        const now = Date.now();
-        const savedTime = parseInt(timestamp);
-
-        if (now - savedTime < 10 * 60 * 1000) {
-          const gameState: GameState = JSON.parse(savedState);
-
-          setReleaseMBID(gameState.releaseMBID);
-          setAlbumName(gameState.albumName);
-          setArtistName(gameState.artistName);
-          setSongs(gameState.songs);
-          setCorrectGuesses(gameState.correctGuesses);
-          setRemainingMinutes(gameState.remainingMinutes);
-          setRemainingSeconds(gameState.remainingSeconds);
-          setElapsedMinutes(gameState.elapsedMinutes);
-          setElapsedSeconds(gameState.elapsedSeconds);
-          setHasEnded(gameState.hasEnded);
-          setStopped(gameState.stopped);
-          setLoaded(true);
-          setRestoringState(true);
-
-          localStorage.removeItem("gameState");
-          localStorage.removeItem("gameStateTimestamp");
-
-          return true;
-        }
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Error restoring game state:", error);
-      return false;
+    if (gameState) {
+      setReleaseMBID(gameState.releaseMBID);
+      setAlbumName(gameState.albumName);
+      setArtistName(gameState.artistName);
+      setSongs(gameState.songs);
+      setCorrectGuesses(gameState.correctGuesses);
+      setRemainingMinutes(gameState.remainingMinutes);
+      setRemainingSeconds(gameState.remainingSeconds);
+      setElapsedMinutes(gameState.elapsedMinutes);
+      setElapsedSeconds(gameState.elapsedSeconds);
+      setHasEnded(gameState.hasEnded);
+      setStopped(gameState.stopped);
+      setLoaded(true);
+      setRestoringState(true);
+      return true;
     }
+
+    return false;
   }, []);
 
   const fetchTracklist = useCallback(async () => {
@@ -221,6 +203,7 @@ const MainGame = (props: { album: string }) => {
       stopCountdown();
       reward();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [correctGuesses, songs]);
 
   useEffect(() => {
@@ -402,7 +385,7 @@ const MainGame = (props: { album: string }) => {
                       <SignUpButton />
                     </SignedOut>
                     <SignedIn>
-                      {scoreSaved ? (
+                      {!scoreSaved ? (
                         <p className="text-lg font-semibold text-green-600">
                           Score successfully saved!
                         </p>
