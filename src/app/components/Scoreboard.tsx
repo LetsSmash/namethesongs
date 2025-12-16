@@ -7,6 +7,13 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  useDisclosure,
+  Modal,
+  Button,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalContent,
 } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import {
@@ -19,13 +26,20 @@ import {
 } from "@/app/actions";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
-import { fetchAlbumInfos, fetchReleaseGroupFromRelease, getArtistInfo } from "@/app/utils";
+import {
+  fetchAlbumInfos,
+  fetchReleaseGroupFromRelease,
+  getArtistInfo,
+  parseConfig,
+} from "@/app/utils";
 import { Release } from "../../types/release";
 import { Group } from "../../types/releasegroup";
 import { Artist } from "@/types/artist";
 import FormButton from "./FormButton";
 import { useRouter } from "next/navigation";
 import { ScoreSchema } from "@/types/score";
+import { ConfigSchema } from "@/types/config";
+import { AlbumList } from "./AlbumList";
 
 interface ScoreboardProps {
   mbid: string;
@@ -45,9 +59,12 @@ const Scoreboard = ({
   const [username, setUsername] = useState("");
   const [usernames, setUsernames] = useState<Record<string, string>>({});
   const [trackCount, setTrackCount] = useState(0);
+  const [selectedConfig, setSelectedConfig] = useState<ConfigSchema | null>(null);
 
   const { userId } = useAuth();
   const router = useRouter();
+
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   // Load current user's username in "user" mode
   useEffect(() => {
@@ -176,12 +193,67 @@ const Scoreboard = ({
 
   const getUsernameById = (id: string) => usernames[id] ?? "Loading...";
 
-  const parseConfig = (config: string): string[] => {
-    try {
-      return JSON.parse(config);
-    } catch {
-      return [];
+  const renderTableColumns = () => {
+    const baseColumns = [
+      <TableColumn key="rank">Rank</TableColumn>,
+      <TableColumn key="user">User</TableColumn>,
+      <TableColumn key="score">Score</TableColumn>,
+      <TableColumn key="time">Time</TableColumn>,
+    ];
+
+    if (types === "artist") {
+      baseColumns.push(<TableColumn key="albums">Albums</TableColumn>);
     }
+
+    return baseColumns;
+  };
+
+  const renderTableRow = (score: ScoreSchema, index: number) => {
+    const albumCount = score.config
+      ? parseConfig(score.config.config).length
+      : 0;
+
+    const baseCells = [
+      <TableCell key="rank" className="font-bold">
+        {index + 1}
+      </TableCell>,
+      <TableCell key="user">
+        {mode === "user" ? username : getUsernameById(score.user_id)}
+      </TableCell>,
+      <TableCell key="score" className="text-green-600">
+        {score.score}
+      </TableCell>,
+      <TableCell key="time" className="text-blue-600">
+        {score.time}
+      </TableCell>,
+    ];
+
+    if (types === "artist") {
+      baseCells.push(
+        <TableCell key="albums" className="text-gray-600">
+          <button
+            onClick={() => {
+              if (score.config) {
+                setSelectedConfig(score.config);
+                onOpen();
+              }
+            }}
+            className="hover:underline hover:text-blue-600 cursor-pointer"
+          >
+            {albumCount} {albumCount === 1 ? "album" : "albums"}
+          </button>
+        </TableCell>
+      );
+    }
+
+    return (
+      <TableRow
+        key={score.id ?? index}
+        className={`${index === 0 ? "bg-yellow-100" : "bg-white"} hover:bg-gray-100`}
+      >
+        {baseCells}
+      </TableRow>
+    );
   };
 
   // Build details line: show disambiguation and track count (only if > 0)
@@ -193,13 +265,15 @@ const Scoreboard = ({
   }
 
   // Determine title and artist name
-  const title = types === "artist" 
-    ? (entityData as Artist)?.name 
-    : (entityData as Release | Group)?.title;
-  
-  const artistName = types !== "artist" && "artist-credit" in (entityData as any)
-    ? (entityData as any)["artist-credit"]?.[0]?.name
-    : undefined;
+  const title =
+    types === "artist"
+      ? (entityData as Artist)?.name
+      : (entityData as Release | Group)?.title;
+
+  const artistName =
+    types !== "artist" && "artist-credit" in (entityData as any)
+      ? (entityData as any)["artist-credit"]?.[0]?.name
+      : undefined;
 
   // Determine play button route
   const getPlayRoute = () => {
@@ -225,49 +299,15 @@ const Scoreboard = ({
           {artistName && (
             <h3 className="text-xl font-medium mb-6 text-gray-700 flex items-center gap-2">
               by{" "}
-              <span className="font-semibold text-primary">
-                {artistName}
-              </span>
+              <span className="font-semibold text-primary">{artistName}</span>
             </h3>
           )}
           <Table aria-label="Highscores table" className="w-full">
             <TableHeader className="text-left">
-              <TableColumn>Rank</TableColumn>
-              <TableColumn>User</TableColumn>
-              <TableColumn>Score</TableColumn>
-              <TableColumn>Time</TableColumn>
-              {types === "artist" && <TableColumn>Albums</TableColumn>}
+              {renderTableColumns()}
             </TableHeader>
             <TableBody>
-              {scores.map((score, index) => {
-                const albumCount = score.config
-                  ? parseConfig(score.config).length
-                  : 0;
-                return (
-                  <TableRow
-                    key={score.id ?? index}
-                    className={`${
-                      index === 0 ? "bg-yellow-100" : "bg-white"
-                    } hover:bg-gray-100`}
-                  >
-                    <TableCell className="font-bold">{index + 1}</TableCell>
-                    <TableCell>
-                      {mode === "user"
-                        ? username
-                        : getUsernameById(score.user_id)}
-                    </TableCell>
-                    <TableCell className="text-green-600">
-                      {score.score}
-                    </TableCell>
-                    <TableCell className="text-blue-600">{score.time}</TableCell>
-                    {types === "artist" && (
-                      <TableCell className="text-gray-600">
-                        {albumCount} {albumCount === 1 ? "album" : "albums"}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
+              {scores.map((score, index) => renderTableRow(score, index))}
             </TableBody>
           </Table>
           {mode === "user" && playRoute && showPlayButton && (
@@ -278,8 +318,30 @@ const Scoreboard = ({
         </div>
       ) : (
         <div className="text-center text-gray-600 italic">
-          No one played this {types === "artist" ? "artist" : "album"} yet. Be the first to save your score!
+          No one played this {types === "artist" ? "artist" : "album"} yet. Be
+          the first to save your score!
         </div>
+      )}
+      {selectedConfig && (
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader>
+                  <h2 className="text-2xl font-bold">Selected Albums</h2>
+                </ModalHeader>
+                <ModalBody>
+                  <AlbumList config={selectedConfig} />
+                </ModalBody>
+                <ModalFooter>
+                  <Button color="primary" onPress={onClose}>
+                    Close
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
       )}
     </>
   );

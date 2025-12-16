@@ -5,6 +5,7 @@ import { artistConfigurations, artistScores, scores } from "@/db/schema";
 import { db } from "@/db/drizzle";
 import { eq, desc, and } from "drizzle-orm";
 import { sortResultsNumerically } from "./utils";
+import { ConfigSchema } from "@/types/config";
 
 export async function createScore({
   mode,
@@ -145,17 +146,17 @@ export async function getScoresByReleaseGroup(rgmbid: string) {
   return sortResultsNumerically(results);
 }
 
-export async function getConfigurationId(config: string) {
+export async function getConfigurationId(config: string): Promise<ConfigSchema[]> {
   return await db
-    .select({ id: artistConfigurations.id })
+    .select()
     .from(artistConfigurations)
     .where(eq(artistConfigurations.config, config))
     .limit(1);
 }
 
-export async function getLastConfigurationId() {
+export async function getLastConfigurationId(): Promise<ConfigSchema[]> {
   return await db
-    .select({ id: artistConfigurations.id })
+    .select()
     .from(artistConfigurations)
     .orderBy(desc(artistConfigurations.id))
     .limit(1);
@@ -170,7 +171,8 @@ export async function getArtistScoresByMbid(mbid: string) {
       score: artistScores.score,
       mbid: artistScores.mbid,
       configId: artistScores.configId,
-      config: artistConfigurations.config,
+      configMbid: artistConfigurations.mbid,
+      configString: artistConfigurations.config,
     })
     .from(artistScores)
     .leftJoin(artistConfigurations, eq(artistScores.configId, artistConfigurations.id))
@@ -185,7 +187,11 @@ export async function getArtistScoresByMbid(mbid: string) {
     mbid: r.mbid,
     mode: 'artist',
     rgmbid: '',
-    config: r.config || '',
+    config: r.configId && r.configString && r.configMbid ? {
+      id: r.configId,
+      mbid: r.configMbid,
+      config: r.configString,
+    } : undefined,
   })));
 }
 
@@ -201,7 +207,8 @@ export async function getUserArtistScoresByMbid(mbid: string) {
       score: artistScores.score,
       mbid: artistScores.mbid,
       configId: artistScores.configId,
-      config: artistConfigurations.config,
+      configMbid: artistConfigurations.mbid,
+      configString: artistConfigurations.config,
     })
     .from(artistScores)
     .leftJoin(artistConfigurations, eq(artistScores.configId, artistConfigurations.id))
@@ -219,6 +226,10 @@ export async function getUserArtistScoresByMbid(mbid: string) {
     mbid: r.mbid,
     mode: 'artist',
     rgmbid: '',
-    config: r.config || '',
+    config: r.configId && r.configString && r.configMbid ? {
+      id: r.configId,
+      mbid: r.configMbid,
+      config: r.configString,
+    } : undefined,
   })));
 }

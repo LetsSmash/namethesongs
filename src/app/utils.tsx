@@ -122,28 +122,31 @@ export const sortAlbums = (albums: any[]) =>
       new Date(b["first-release-date"]).getTime()
   );
 
-export const combineTracksReleases = (releases: Release[]) => releases.map((release) => {
-  const combinedTracks = release.media.reduce((acc, media) => {
-    return acc + media["track-count"];
-  }, 0);
-  return {
-    ...release,
-    combinedTracks,
-  };
-});
+export const combineTracksReleases = (releases: Release[]) =>
+  releases.map((release) => {
+    const combinedTracks = release.media.reduce((acc, media) => {
+      return acc + media["track-count"];
+    }, 0);
+    return {
+      ...release,
+      combinedTracks,
+    };
+  });
 
-export const filterUniqueTrackCountReleases = (releases: Release[]) => releases.filter(
-  (release, index, self) =>
-    index === self.findIndex((r) => r.combinedTracks === release.combinedTracks)
-);
+export const filterUniqueTrackCountReleases = (releases: Release[]) =>
+  releases.filter(
+    (release, index, self) =>
+      index ===
+      self.findIndex((r) => r.combinedTracks === release.combinedTracks)
+  );
 
-export const sortReleasesByTrackCount = (releases: Release[]) => releases.sort(
-  (a, b) => (a.combinedTracks ?? 0) - (b.combinedTracks ?? 0)
-);
+export const sortReleasesByTrackCount = (releases: Release[]) =>
+  releases.sort((a, b) => (a.combinedTracks ?? 0) - (b.combinedTracks ?? 0));
 
 export const filterAndSortReleases = (releases: any[]) => {
   const withCombinedTracks = combineTracksReleases(releases);
-  const uniqueTrackCountReleases = filterUniqueTrackCountReleases(withCombinedTracks);
+  const uniqueTrackCountReleases =
+    filterUniqueTrackCountReleases(withCombinedTracks);
   return sortReleasesByTrackCount(uniqueTrackCountReleases);
 };
 
@@ -205,5 +208,13 @@ export const restoreGameState = <T extends Record<string, any>>(
   } catch (error) {
     console.error("Error restoring game state:", error);
     return null;
+  }
+};
+
+export const parseConfig = (config: string): string[] => {
+  try {
+    return JSON.parse(config);
+  } catch {
+    return [];
   }
 };

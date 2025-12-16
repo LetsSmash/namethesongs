@@ -1,3 +1,5 @@
+import { ConfigSchema } from "./config";
+
 export interface ScoreSchema {
   id: number;
   user_id: string;
@@ -6,5 +8,5 @@ export interface ScoreSchema {
   mbid: string;
   time: string;
   score: string;
-  config?: string;
+  config?: ConfigSchema;
 }
