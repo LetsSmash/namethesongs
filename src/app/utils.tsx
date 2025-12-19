@@ -115,6 +115,16 @@ export const getArtistInfo = async (id: string) => {
   }
 };
 
+export const combinedTracksRelease = (release: Release) => {
+  const combinedTracks = release.media.reduce((acc, media) => {
+    return acc + media["track-count"];
+  }, 0);
+  return {
+    ...release,
+    combinedTracks,
+  };
+};
+
 export const sortAlbums = (albums: any[]) =>
   albums.sort(
     (a, b) =>
@@ -124,13 +134,7 @@ export const sortAlbums = (albums: any[]) =>
 
 export const combineTracksReleases = (releases: Release[]) =>
   releases.map((release) => {
-    const combinedTracks = release.media.reduce((acc, media) => {
-      return acc + media["track-count"];
-    }, 0);
-    return {
-      ...release,
-      combinedTracks,
-    };
+    return combinedTracksRelease(release);
   });
 
 export const filterUniqueTrackCountReleases = (releases: Release[]) =>

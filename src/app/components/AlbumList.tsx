@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchAlbumInfos, parseConfig } from "@/app/utils";
-import { Group } from "../../types/releasegroup";
+import { combinedTracksRelease, fetchReleaseGroupFromRelease, parseConfig } from "@/app/utils";
 import { ConfigSchema } from "@/types/config";
+import { Release } from "@/types/release";
 
 export const AlbumList = ({ config }: { config: ConfigSchema }) => {
-  const [albums, setAlbums] = useState<Group[]>([]);
+  const [albums, setAlbums] = useState<Release[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadAlbums = async () => {
       try {
-        const albumIds = parseConfig(config.config);
+        const albumIds = parseConfig(config.config).filter((id) => id != "");
         const fetchedAlbums = await Promise.all(
-          albumIds.map((albumMbid) => fetchAlbumInfos(albumMbid))
+          albumIds.map((albumMbid) => fetchReleaseGroupFromRelease(albumMbid))
         );
         setAlbums(fetchedAlbums);
       } catch (error) {
@@ -31,11 +31,13 @@ export const AlbumList = ({ config }: { config: ConfigSchema }) => {
   }
 
   return (
-    <ul className="list-disc list-inside">
+    <ul className="divide-y">
       {albums.map((album) => (
         <li key={album.id} className="mb-2">
-          {album.title} (
-          {album["first-release-date"]?.substring(0, 4) || "Unknown"})
+          <h3 className="text-xl font-bold">{album["release-group"].title}</h3>
+          {album.title}
+          {album.disambiguation ? ` (${album.disambiguation}, ` : " ("}
+          {`${combinedTracksRelease(album).combinedTracks} Tracks)`}{" "}
         </li>
       ))}
     </ul>

@@ -1,16 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchReleaseInfos, normalizeString, saveGameState as saveGameStateUtil, restoreGameState as restoreGameStateUtil } from "../utils";
+import {
+  fetchReleaseInfos,
+  normalizeString,
+  saveGameState as saveGameStateUtil,
+  restoreGameState as restoreGameStateUtil,
+} from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
-import { Button, Card, CardHeader, Divider, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Radio, RadioGroup, useDisclosure } from "@nextui-org/react";
+import {
+  Button,
+  Card,
+  CardHeader,
+  Divider,
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  Radio,
+  RadioGroup,
+  useDisclosure,
+} from "@nextui-org/react";
 import FormInput from "@/app/components/FormInput";
 import Image from "next/image";
 import axios from "axios";
 import Countdown from "react-countdown";
 import { notFound, useRouter } from "next/navigation";
-import { createArtistScore, createConfiguration, getConfigurationId, getLastConfigurationId } from "../actions";
-import Scoreboard from "@/app/components/Scoreboard"
+import {
+  createArtistScore,
+  createConfiguration,
+  getConfigurationId,
+  getLastConfigurationId,
+} from "../actions";
+import Scoreboard from "@/app/components/Scoreboard";
 import {
   SignedOut,
   SignedIn,
@@ -29,7 +52,12 @@ const MainGameArtist = (props: { artist: string }) => {
   const [hasEnded, setHasEnded] = useState(false);
   const [endTime] = useState(Date.now() + 20 * 60000);
   const [hasReleases, setHasReleases] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<"default" | "user">("default");
+  const [selectedMode, setSelectedMode] = useState<"default" | "user">(
+    "default"
+  );
+  const [selectedConfigMode, setSelectedConfigMode] = useState<"this" | "all">(
+    "this"
+  );
   const [scoreSaved, setScoreSaved] = useState(false);
   const [restoringState, setRestoringState] = useState(false);
 
@@ -149,7 +177,7 @@ const MainGameArtist = (props: { artist: string }) => {
       );
       const uniqueNormalizedTitles = Array.from(new Set(normalizedTitles));
       setSongs(uniqueNormalizedTitles);
-      
+
       if (restoringState) {
         setRestoringState(false);
       }
@@ -195,7 +223,7 @@ const MainGameArtist = (props: { artist: string }) => {
 
     try {
       const configString = JSON.stringify(releaseIDs);
-      
+
       // Check if configuration already exists
       const existingConfig = await getConfigurationId(configString);
       let configId: number;
@@ -337,11 +365,21 @@ const MainGameArtist = (props: { artist: string }) => {
           {hasEnded && (
             <div className="flex flex-col items-center gap-2 mt-4">
               <div className="flex gap-4">
-                <Button color="secondary" style={{width: 190}} onClick={onOpen}>
+                <Button
+                  color="secondary"
+                  style={{ width: 190 }}
+                  onClick={onOpen}
+                >
                   View Scoreboard
                 </Button>
-                <Button color="primary" style={{width: 190}} onClick={() => {router.push("/")}}>
-                  Try Another Artist 
+                <Button
+                  color="primary"
+                  style={{ width: 190 }}
+                  onClick={() => {
+                    router.push("/");
+                  }}
+                >
+                  Try Another Artist
                 </Button>
               </div>
               <Button
@@ -354,7 +392,7 @@ const MainGameArtist = (props: { artist: string }) => {
                   onSaveScoreOpen();
                 }}
                 className="bg-green-500 hover:bg-green-600 text-white"
-                style={{width: 384}}
+                style={{ width: 384 }}
               >
                 Save Score
               </Button>
@@ -362,14 +400,20 @@ const MainGameArtist = (props: { artist: string }) => {
           )}
         </>
       )}
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" scrollBehavior="inside">
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="3xl"
+        scrollBehavior="inside"
+      >
         <ModalContent>
           {() => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
+              <ModalHeader className="flex flex-col gap-1 items-center">
                 Artist Scoreboard
               </ModalHeader>
-              <ModalBody className="p-6">
+              <ModalBody className="p-6 pt-0">
+                <Divider />
                 <div className="flex justify-center">
                   <RadioGroup
                     value={selectedMode}
@@ -379,13 +423,40 @@ const MainGameArtist = (props: { artist: string }) => {
                     orientation="horizontal"
                   >
                     <Radio value="default">Global</Radio>
-                    <Radio value="user" className={!isSignedIn ? "hidden" : ""}>Your Scores</Radio>
+                    <Radio value="user" className={!isSignedIn ? "hidden" : ""}>
+                      Your Scores
+                    </Radio>
+                  </RadioGroup>
+                </div>
+                <Divider />
+                <div className="flex justify-center">
+                  <RadioGroup
+                    value={selectedConfigMode}
+                    onValueChange={(value) =>
+                      setSelectedConfigMode(value as "this" | "all")
+                    }
+                    orientation="horizontal"
+                  >
+                    <Radio value="this">This Configuration</Radio>
+                    <Radio value="all">All Configurations</Radio>
                   </RadioGroup>
                 </div>
                 {selectedMode === "default" ? (
-                  <Scoreboard mbid={props.artist} types="artist" />
+                  <Scoreboard 
+                    mbid={props.artist} 
+                    types="artist" 
+                    configMode={selectedConfigMode}
+                    currentConfig={JSON.stringify(releaseIDs)}
+                  />
                 ) : (
-                  <Scoreboard mbid={props.artist} mode="user" types="artist" showPlayButton={false}/>
+                  <Scoreboard
+                    mbid={props.artist}
+                    mode="user"
+                    types="artist"
+                    showPlayButton={false}
+                    configMode={selectedConfigMode}
+                    currentConfig={JSON.stringify(releaseIDs)}
+                  />
                 )}
               </ModalBody>
             </>
@@ -408,23 +479,19 @@ const MainGameArtist = (props: { artist: string }) => {
                   <SignUpButton />
                 </SignedOut>
                 <SignedIn>
-                  {!scoreSaved ? (
-                    <p className="text-lg font-semibold text-green-600">
-                      Score successfully saved!
-                    </p>
-                  ) : (
+                  {scoreSaved ? (
                     <p className="text-lg font-semibold text-red-600">
                       You already saved your score!
+                    </p>
+                  ) : (
+                    <p className="text-lg font-semibold text-green-600">
+                      Score successfully saved!
                     </p>
                   )}
                 </SignedIn>
               </ModalBody>
               <ModalFooter>
-                <Button
-                  onClick={onClose}
-                  color="primary"
-                  className="w-full"
-                >
+                <Button onClick={onClose} color="primary" className="w-full">
                   Close
                 </Button>
               </ModalFooter>

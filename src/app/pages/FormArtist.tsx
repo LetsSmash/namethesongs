@@ -132,14 +132,14 @@ const FormArtist = () => {
       );
 
       // Group ReleaseGroups by Releases
-      const releaseGroupsWithReleases: Group[] = sortAlbums(uniqueReleaseGroups).map(
-        (rg) => {
-          const releasesForGroup = allReleases.filter(
-            (release) => release["release-group"].id === rg.id
-          );
-          return { ...rg, releases: releasesForGroup };
-        }
-      );
+      const releaseGroupsWithReleases: Group[] = sortAlbums(
+        uniqueReleaseGroups
+      ).map((rg) => {
+        const releasesForGroup = allReleases.filter(
+          (release) => release["release-group"].id === rg.id
+        );
+        return { ...rg, releases: releasesForGroup };
+      });
       setReleaseGroupsReleases(releaseGroupsWithReleases);
       setSelectedReleaseGroups(
         releaseGroupsWithReleases.flatMap((rg) => {
@@ -166,19 +166,17 @@ const FormArtist = () => {
         })
         .flat();
 
-      setSortedReleaseGroups(filteredSorted)
+      setSortedReleaseGroups(filteredSorted);
     }
   }, [releaseGroupsReleases]);
 
   useEffect(() => {
-    const initialSelectedReleases = sortedReleaseGroups.map(
-      (releaseGroup) => {
-        // If there is only one release, automatically select it
-        return releaseGroup.releases.length === 1
-          ? releaseGroup.releases[0].id
-          : "";
-      }
-    );
+    const initialSelectedReleases = sortedReleaseGroups.map((releaseGroup) => {
+      // If there is only one release, automatically select it
+      return releaseGroup.releases.length === 1
+        ? releaseGroup.releases[0].id
+        : "";
+    });
     setSelectedReleases(initialSelectedReleases);
   }, [sortedReleaseGroups]);
 
@@ -322,7 +320,7 @@ const FormArtist = () => {
                                     {release.disambiguation
                                       ? ` (${release.disambiguation}, `
                                       : " ("}
-                                    {`${release.combinedTracks} Tracks)`}
+                                    {`${release.combinedTracks} Tracks, )`}
                                   </Radio>
                                 ))}
                               </RadioGroup>

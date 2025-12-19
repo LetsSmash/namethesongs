@@ -40,11 +40,14 @@ import { useRouter } from "next/navigation";
 import { ScoreSchema } from "@/types/score";
 import { ConfigSchema } from "@/types/config";
 import { AlbumList } from "./AlbumList";
+import { config } from "dotenv";
 
 interface ScoreboardProps {
   mbid: string;
   mode?: "default" | "user";
   types?: "release" | "releasegroup" | "artist";
+  configMode?: "this" | "all";
+  currentConfig?: string;
   showPlayButton?: boolean;
 }
 
@@ -52,9 +55,12 @@ const Scoreboard = ({
   mbid,
   mode = "default",
   types = "release",
+  configMode = "this",
+  currentConfig,
   showPlayButton = false,
 }: ScoreboardProps) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
+  const [allScores, setAllScores] = useState<ScoreSchema[]>([]);
   const [entityData, setEntityData] = useState<Release | Group | Artist>();
   const [username, setUsername] = useState("");
   const [usernames, setUsernames] = useState<Record<string, string>>({});
@@ -146,35 +152,49 @@ const Scoreboard = ({
         if (mode === "user") {
           if (types === "release") {
             const scoreData = await getUserScoresByAlbum(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           } else if (types === "releasegroup") {
             const scoreData = await getUserScoresByReleaseGroup(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           } else if (types === "artist") {
             const scoreData = await getUserArtistScoresByMbid(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           }
         } else {
           if (types === "release") {
             const scoreData = await getScoresByAlbum(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           } else if (types === "releasegroup") {
             const scoreData = await getScoresByReleaseGroup(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           } else if (types === "artist") {
             const scoreData = await getArtistScoresByMbid(mbid);
-            setScores(scoreData);
+            setAllScores(scoreData);
           }
         }
       } catch (err) {
         console.error("Error fetching scores:", err);
-        setScores([]);
+        setAllScores([]);
       }
     };
 
     fetchEntityData();
     fetchScores();
   }, [mbid, types, mode]);
+
+  // Filter scores based on configMode
+  useEffect(() => {
+    if (types === "artist" && configMode === "this" && currentConfig) {
+      // Filter scores to only show those with the current configuration
+      const filtered = allScores.filter(
+        (score) => score.config && score.config.config === currentConfig
+      );
+      setScores(filtered);
+    } else {
+      // Show all scores
+      setScores(allScores);
+    }
+  }, [allScores, configMode, currentConfig, types]);
 
   // Compute track count for releases
   useEffect(() => {
@@ -201,7 +221,7 @@ const Scoreboard = ({
       <TableColumn key="time">Time</TableColumn>,
     ];
 
-    if (types === "artist") {
+    if (types === "artist" && configMode !== "this") {
       baseColumns.push(<TableColumn key="albums">Albums</TableColumn>);
     }
 
@@ -210,7 +230,7 @@ const Scoreboard = ({
 
   const renderTableRow = (score: ScoreSchema, index: number) => {
     const albumCount = score.config
-      ? parseConfig(score.config.config).length
+      ? parseConfig(score.config.config).filter((id) => id != "").length
       : 0;
 
     const baseCells = [
@@ -228,7 +248,7 @@ const Scoreboard = ({
       </TableCell>,
     ];
 
-    if (types === "artist") {
+    if (types === "artist" && configMode !== "this") {
       baseCells.push(
         <TableCell key="albums" className="text-gray-600">
           <button
@@ -271,7 +291,7 @@ const Scoreboard = ({
       : (entityData as Release | Group)?.title;
 
   const artistName =
-    types !== "artist" && "artist-credit" in (entityData as any)
+    types !== "artist" && entityData && "artist-credit" in (entityData as any)
       ? (entityData as any)["artist-credit"]?.[0]?.name
       : undefined;
 
