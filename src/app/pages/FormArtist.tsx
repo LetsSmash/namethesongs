@@ -317,10 +317,13 @@ const FormArtist = () => {
                                 {releaseGroup.releases.map((release) => (
                                   <Radio value={release.id} key={release.id}>
                                     {release.title}
+                                    {` (${release.combinedTracks} Tracks`}
                                     {release.disambiguation
-                                      ? ` (${release.disambiguation}, `
-                                      : " ("}
-                                    {`${release.combinedTracks} Tracks, )`}
+                                      ? `, ${release.disambiguation}`
+                                      : ""}
+                                    {release.date
+                                      ? `, ${release.date})`
+                                      : ", No Date available)"}
                                   </Radio>
                                 ))}
                               </RadioGroup>

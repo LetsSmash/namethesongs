@@ -363,18 +363,38 @@ const MainGameArtist = (props: { artist: string }) => {
             ))}
           </div>
           {hasEnded && (
-            <div className="flex flex-col items-center gap-2 mt-4">
-              <div className="flex gap-4">
+            <div className="flex flex-col items-center mt-8 mb-8">
+              <div className="flex flex-col gap-2 w-3/12 max-w-md px-4 mb-12">
+                {!scoreSaved && (
+                  <Button
+                    onPress={async () => {
+                      if (isSignedIn && !scoreSaved) {
+                        onSaveScoreOpen();
+                        await saveScore();
+                      } else if (!isSignedIn) {
+                        saveGameState();
+                      }
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg"
+                    size="lg"
+                  >
+                    Save Score
+                  </Button>
+                )}
                 <Button
                   color="secondary"
-                  style={{ width: 190 }}
+                  size="lg"
+                  className="font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg w-full"
                   onClick={onOpen}
                 >
                   View Scoreboard
                 </Button>
+              </div>
+              <div className="w-3/12 max-w-md px-4">
                 <Button
                   color="primary"
-                  style={{ width: 190 }}
+                  size="lg"
+                  className="font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg w-full"
                   onClick={() => {
                     router.push("/");
                   }}
@@ -382,20 +402,6 @@ const MainGameArtist = (props: { artist: string }) => {
                   Try Another Artist
                 </Button>
               </div>
-              <Button
-                onPress={async () => {
-                  if (isSignedIn && !scoreSaved) {
-                    await saveScore();
-                  } else if (!isSignedIn) {
-                    saveGameState();
-                  }
-                  onSaveScoreOpen();
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white"
-                style={{ width: 384 }}
-              >
-                Save Score
-              </Button>
             </div>
           )}
         </>
@@ -442,9 +448,9 @@ const MainGameArtist = (props: { artist: string }) => {
                   </RadioGroup>
                 </div>
                 {selectedMode === "default" ? (
-                  <Scoreboard 
-                    mbid={props.artist} 
-                    types="artist" 
+                  <Scoreboard
+                    mbid={props.artist}
+                    types="artist"
                     configMode={selectedConfigMode}
                     currentConfig={JSON.stringify(releaseIDs)}
                   />
@@ -479,15 +485,9 @@ const MainGameArtist = (props: { artist: string }) => {
                   <SignUpButton />
                 </SignedOut>
                 <SignedIn>
-                  {scoreSaved ? (
-                    <p className="text-lg font-semibold text-red-600">
-                      You already saved your score!
-                    </p>
-                  ) : (
-                    <p className="text-lg font-semibold text-green-600">
-                      Score successfully saved!
-                    </p>
-                  )}
+                  <p className="text-lg font-semibold text-green-600">
+                    Score successfully saved!
+                  </p>
                 </SignedIn>
               </ModalBody>
               <ModalFooter>
