@@ -14,6 +14,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalContent,
+  Tooltip,
 } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import {
@@ -40,6 +41,7 @@ import { useRouter } from "next/navigation";
 import { ScoreSchema } from "@/types/score";
 import { ConfigSchema } from "@/types/config";
 import { AlbumList } from "./AlbumList";
+import { format, formatDistanceToNow } from "date-fns";
 import { config } from "dotenv";
 
 interface ScoreboardProps {
@@ -65,7 +67,9 @@ const Scoreboard = ({
   const [username, setUsername] = useState("");
   const [usernames, setUsernames] = useState<Record<string, string>>({});
   const [trackCount, setTrackCount] = useState(0);
-  const [selectedConfig, setSelectedConfig] = useState<ConfigSchema | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<ConfigSchema | null>(
+    null
+  );
 
   const { userId } = useAuth();
   const router = useRouter();
@@ -239,6 +243,9 @@ const Scoreboard = ({
       </TableCell>,
       <TableCell key="user">
         {mode === "user" ? username : getUsernameById(score.user_id)}
+        <Tooltip content={format(new Date(score.created), "PPPpp")}>
+          <span className="text-gray-500 text-xs">{` (${formatDistanceToNow(new Date(score.created), { addSuffix: true })})`}</span>
+        </Tooltip>
       </TableCell>,
       <TableCell key="score" className="text-green-600">
         {score.score}
@@ -343,7 +350,12 @@ const Scoreboard = ({
         </div>
       )}
       {selectedConfig && (
-        <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl" scrollBehavior="inside">
+        <Modal
+          isOpen={isOpen}
+          onOpenChange={onOpenChange}
+          size="2xl"
+          scrollBehavior="inside"
+        >
           <ModalContent>
             {(onClose) => (
               <>

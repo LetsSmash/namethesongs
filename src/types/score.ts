@@ -9,4 +9,6 @@ export interface ScoreSchema {
   time: string;
   score: string;
   config?: ConfigSchema;
+  created: string;
+  deleted: string | null;
 }

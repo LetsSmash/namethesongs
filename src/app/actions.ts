@@ -77,7 +77,11 @@ export async function getScoresByAlbum(mbid: string) {
     .where(eq(scores.mbid, mbid))
     .orderBy(desc(scores.score));
 
-  return sortResultsNumerically(results);
+  return sortResultsNumerically(results.map(r => ({
+    ...r,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
+  })));
 }
 
 export async function getScoresByUser() {
@@ -90,7 +94,11 @@ export async function getScoresByUser() {
     .where(eq(scores.user_id, userId))
     .orderBy(desc(scores.score));
 
-  return sortResultsNumerically(results);
+  return sortResultsNumerically(results.map(r => ({
+    ...r,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
+  })));
 }
 
 export async function getUserScoresByAlbum(mbid: string) {
@@ -106,7 +114,11 @@ export async function getUserScoresByAlbum(mbid: string) {
     ))
     .orderBy(desc(scores.score));
 
-  return sortResultsNumerically(results);
+  return sortResultsNumerically(results.map(r => ({
+    ...r,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
+  })));
 }
 
 export async function getAlbumsPlayedByUser() {
@@ -133,7 +145,11 @@ export async function getUserScoresByReleaseGroup(rgmbid: string) {
     ))
     .orderBy(desc(scores.score));
 
-  return sortResultsNumerically(results);
+  return sortResultsNumerically(results.map(r => ({
+    ...r,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
+  })));
 }
 
 export async function getScoresByReleaseGroup(rgmbid: string) {
@@ -143,7 +159,11 @@ export async function getScoresByReleaseGroup(rgmbid: string) {
     .where(eq(scores.rgmbid, rgmbid))
     .orderBy(desc(scores.score));
 
-  return sortResultsNumerically(results);
+  return sortResultsNumerically(results.map(r => ({
+    ...r,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
+  })));
 }
 
 export async function getConfigurationId(config: string): Promise<ConfigSchema[]> {
@@ -171,6 +191,8 @@ export async function getArtistScoresByMbid(mbid: string) {
       score: artistScores.score,
       mbid: artistScores.mbid,
       configId: artistScores.configId,
+      created: artistScores.created,
+      deleted: artistScores.deleted,
       configMbid: artistConfigurations.mbid,
       configString: artistConfigurations.config,
     })
@@ -186,7 +208,9 @@ export async function getArtistScoresByMbid(mbid: string) {
     score: r.score,
     mbid: r.mbid,
     mode: 'artist',
-    rgmbid: '',
+    rgmbid: null,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
     config: r.configId && r.configString && r.configMbid ? {
       id: r.configId,
       mbid: r.configMbid,
@@ -207,6 +231,8 @@ export async function getUserArtistScoresByMbid(mbid: string) {
       score: artistScores.score,
       mbid: artistScores.mbid,
       configId: artistScores.configId,
+      created: artistScores.created,
+      deleted: artistScores.deleted,
       configMbid: artistConfigurations.mbid,
       configString: artistConfigurations.config,
     })
@@ -225,7 +251,9 @@ export async function getUserArtistScoresByMbid(mbid: string) {
     score: r.score,
     mbid: r.mbid,
     mode: 'artist',
-    rgmbid: '',
+    rgmbid: null,
+    created: r.created.toISOString(),
+    deleted: r.deleted ? r.deleted.toISOString() : null,
     config: r.configId && r.configString && r.configMbid ? {
       id: r.configId,
       mbid: r.configMbid,
