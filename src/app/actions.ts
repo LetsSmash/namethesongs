@@ -132,6 +132,17 @@ export async function getAlbumsPlayedByUser() {
     .groupBy(scores.mbid);
 }
 
+export async function getArtistsPlayedByUser() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("User not found");
+
+  return await db
+    .select({ mbid: artistScores.mbid })
+    .from(artistScores)
+    .where(eq(artistScores.user_id, userId))
+    .groupBy(artistScores.mbid);
+}
+
 export async function getUserScoresByReleaseGroup(rgmbid: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("User not found");
