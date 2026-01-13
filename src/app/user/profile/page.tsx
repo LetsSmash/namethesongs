@@ -17,7 +17,7 @@ export default async function Page() {
             <h2 className="text-center text-3xl font-semibold">Album Leaderboards</h2>
             <Divider className="my-4" />
             {albums.length !== 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+                <div className="flex flex-wrap justify-center gap-6 mt-4">
                     {albums.map((album: { mbid: string }) => (
                         <Scoreboard key={album.mbid} mbid={album.mbid} mode="user" showPlayButton={true} />
                     ))}
@@ -35,7 +35,7 @@ export default async function Page() {
             <h2 className="text-center text-3xl font-semibold">Artist Leaderboards</h2>
             <Divider className="my-4" />
             {artists.length !== 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+                <div className="flex flex-wrap justify-center gap-6 mt-4">
                     {artists.map((artist: { mbid: string }) => (
                         <Scoreboard key={artist.mbid} mbid={artist.mbid} types="artist" configMode="all" />
                     ))}
