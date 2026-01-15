@@ -37,7 +37,7 @@ export default async function Page() {
             {artists.length !== 0 ? (
                 <div className="flex flex-wrap justify-center gap-6 mt-4">
                     {artists.map((artist: { mbid: string }) => (
-                        <Scoreboard key={artist.mbid} mbid={artist.mbid} types="artist" configMode="all" />
+                        <Scoreboard key={artist.mbid} mbid={artist.mbid} mode="user" types="artist" configMode="all" />
                     ))}
                 </div>
             ) : (

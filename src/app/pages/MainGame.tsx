@@ -8,7 +8,13 @@ import { useRouter } from "next/navigation";
 import { Track } from "@/types/tracklist";
 import { Release } from "@/types/release";
 import { ArtistCredit, Group } from "@/types/releasegroup";
-import { fetchAlbumInfos, fetchReleaseInfos, normalizeString, saveGameState as saveGameStateUtil, restoreGameState as restoreGameStateUtil } from "../utils";
+import {
+  fetchAlbumInfos,
+  fetchReleaseInfos,
+  normalizeString,
+  saveGameState as saveGameStateUtil,
+  restoreGameState as restoreGameStateUtil,
+} from "../utils";
 import {
   Button,
   Modal,
@@ -271,7 +277,11 @@ const MainGame = (props: { album: string }) => {
         </>
       )}
       <div className="flex">
-        <span id="rewardId" className="left-1/2 relative self-center" style={{width: 2, height: 2, background: "red"}}/>
+        <span
+          id="rewardId"
+          className="left-1/2 relative self-center"
+          style={{ width: 2, height: 2, background: "red" }}
+        />
         {songs.length > 0 && (
           <ul className={hasEnded ? "" : "mt-6"}>
             {songs.map((song: Track) => (
@@ -299,7 +309,9 @@ const MainGame = (props: { album: string }) => {
       {hasEnded && (
         <div className="flex flex-col mt-6">
           <FormButton onClick={() => router.push("/")}>Restart</FormButton>
-          <FormButton onPress={() => onHighscoresOpen()}>Highscores</FormButton>
+          <FormButton onPress={() => onHighscoresOpen()} color="secondary">
+            Highscores
+          </FormButton>
           <Modal
             isOpen={isHighscoresOpen}
             onOpenChange={onHighscoresOpenChange}
@@ -333,9 +345,16 @@ const MainGame = (props: { album: string }) => {
                       </Tab>
                       <Tab key="releasegroup" title="By Album">
                         {selectedMode === "default" ? (
-                          <Scoreboard mbid={releaseGroupMBID} types="releasegroup" />
+                          <Scoreboard
+                            mbid={releaseGroupMBID}
+                            types="releasegroup"
+                          />
                         ) : (
-                          <Scoreboard mbid={releaseGroupMBID} mode="user" types="releasegroup" />
+                          <Scoreboard
+                            mbid={releaseGroupMBID}
+                            mode="user"
+                            types="releasegroup"
+                          />
                         )}
                       </Tab>
                     </Tabs>
@@ -349,26 +368,28 @@ const MainGame = (props: { album: string }) => {
               )}
             </ModalContent>
           </Modal>
-          <Button
-            onPress={() => {
-              if (isSignedIn && !scoreSaved) {
-                createScore({
-                  mode: "album",
-                  mbid: releaseMBID,
-                  rgmbid: releaseGroupMBID,
-                  time: `${elapsedMinutes < 10 ? `0${elapsedMinutes}` : elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
-                  score: `${correctGuesses.length} / ${songs.length}`,
-                });
-                setScoreSaved(true);
-              } else {
-                saveGameState();
-              }
-              onSaveScoreOpen();
-            }}
-            className="bg-green-500 hover:bg-green-600 text-white my-2"
-          >
-            Save Score
-          </Button>
+          {!scoreSaved && (
+            <Button
+              onPress={() => {
+                if (isSignedIn && !scoreSaved) {
+                  onSaveScoreOpen();
+                  createScore({
+                    mode: "album",
+                    mbid: releaseMBID,
+                    rgmbid: releaseGroupMBID,
+                    time: `${elapsedMinutes < 10 ? `0${elapsedMinutes}` : elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
+                    score: `${correctGuesses.length} / ${songs.length}`,
+                  });
+                  setScoreSaved(true);
+                } else {
+                  saveGameState();
+                }
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg"
+            >
+              Save Score
+            </Button>
+          )}
           <Modal
             isOpen={isSaveScoreOpen}
             onOpenChange={onSaveScoreOpenChange}
@@ -385,15 +406,9 @@ const MainGame = (props: { album: string }) => {
                       <SignUpButton />
                     </SignedOut>
                     <SignedIn>
-                      {!scoreSaved ? (
-                        <p className="text-lg font-semibold text-green-600">
-                          Score successfully saved!
-                        </p>
-                      ) : (
-                        <p className="text-lg font-semibold text-red-600">
-                          You already saved your score!
-                        </p>
-                      )}
+                      <p className="text-lg font-semibold text-green-600">
+                        Score successfully saved!
+                      </p>
                     </SignedIn>
                   </ModalBody>
                   <ModalFooter>
