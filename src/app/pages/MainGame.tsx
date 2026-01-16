@@ -26,7 +26,7 @@ import {
   Tab,
   Tabs,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import {
   SignedOut,
   SignedIn,

@@ -17,7 +17,7 @@ import {
   Radio,
   RadioGroup,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useFormik } from "formik";
 import { useAsyncList } from "@react-stately/data";
 import axios from "axios";

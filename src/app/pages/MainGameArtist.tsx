@@ -21,7 +21,7 @@ import {
   Radio,
   RadioGroup,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import FormInput from "@/app/components/FormInput";
 import Image from "next/image";
 import axios from "axios";

@@ -8,7 +8,7 @@ import {
   DropdownItem,
   Tabs,
   Tab,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import FormBackground from "@/app/components/FormBackground";
 import {

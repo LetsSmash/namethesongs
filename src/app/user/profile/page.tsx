@@ -2,7 +2,7 @@ import { getAlbumsPlayedByUser, getArtistsPlayedByUser } from "@/app/actions";
 import FormBackground from "@/app/components/FormBackground";
 import Scoreboard from "@/app/components/Scoreboard";
 import { currentUser } from "@clerk/nextjs/server";
-import { Divider } from "@nextui-org/react";
+import { Divider } from "@heroui/react";
 
 export default async function Page() {
     const user = await currentUser();

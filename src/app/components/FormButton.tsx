@@ -1,5 +1,5 @@
 import React, { ButtonHTMLAttributes, ReactNode } from "react";
-import {Button, ButtonProps} from "@nextui-org/react"
+import {Button, ButtonProps} from "@heroui/react"
 
 interface HtmlButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
