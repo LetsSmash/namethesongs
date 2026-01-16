@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Tab, Tabs } from "@nextui-org/react";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Tabs,
+  Tab,
+} from "@nextui-org/react";
 
 import FormBackground from "@/app/components/FormBackground";
 import {
@@ -14,22 +21,37 @@ import {
 import FormAlbum from "./FormAlbum";
 import FormArtist from "./FormArtist";
 
-const Form = () => {
-  const ProfileIcon = () => {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <path d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z" />
-      </svg>
-    );
-  };
+import { Icon } from "@iconify-icon/react";
 
+const Form = () => {
   return (
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
       <FormBackground>
         <SignedOut>
-          <div className="grid grid-cols-2 gap-x-4">
-            <SignInButton mode="modal" />
-            <SignUpButton mode="modal" />
+          <div className="flex justify-end pb-4">
+            <Dropdown>
+              <DropdownTrigger>
+                <Icon icon="fa7-solid:user-circle" width="35" height="35" />
+              </DropdownTrigger>
+              <DropdownMenu>
+                <DropdownItem key="signin">
+                  <div className="flex items-center gap-4">
+                    <Icon icon="fa7-solid:sign-in" width="20" height="20" />
+                    <SignInButton mode="modal">
+                      <span>Sign In</span>
+                    </SignInButton>
+                  </div>
+                </DropdownItem>
+                <DropdownItem key="signup">
+                  <div className="flex items-center gap-4">
+                    <Icon icon="fa7-solid:user-plus" width="20" height="20" />
+                    <SignUpButton mode="modal">
+                      <span>Sign Up</span>
+                    </SignUpButton>
+                  </div>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
         </SignedOut>
         <SignedIn>
@@ -39,7 +61,7 @@ const Form = () => {
                 <UserButton.Link
                   href="/user/profile"
                   label="Your Profile"
-                  labelIcon={<ProfileIcon />}
+                  labelIcon={<Icon icon="fa7-solid:user-circle" width="20" height="20" />}
                 />
                 <UserButton.Action label="manageAccount" />
               </UserButton.MenuItems>

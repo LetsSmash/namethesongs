@@ -32,6 +32,7 @@
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@iconify-icon/react": "^3.0.3",
     "@types/lodash": "^4.17.4",
     "@types/node": "^20",
     "@types/react": "^18",
