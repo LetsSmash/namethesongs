@@ -308,10 +308,74 @@ const MainGame = (props: { album: string }) => {
       </div>
       {hasEnded && (
         <div className="flex flex-col mt-6">
-          <FormButton onClick={() => router.push("/")}>Restart</FormButton>
-          <FormButton onPress={() => onHighscoresOpen()} color="secondary">
+          <Button
+            onPress={() => router.push("/")}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-6 shadow-md mb-6"
+          >
+            Restart
+          </Button>
+          {!scoreSaved && (
+            <Button
+              onPress={() => {
+                if (isSignedIn && !scoreSaved) {
+                  onSaveScoreOpen();
+                  createScore({
+                    mode: "album",
+                    mbid: releaseMBID,
+                    rgmbid: releaseGroupMBID,
+                    time: `${elapsedMinutes < 10 ? `0${elapsedMinutes}` : elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
+                    score: `${correctGuesses.length} / ${songs.length}`,
+                  });
+                  setScoreSaved(true);
+                } else {
+                  saveGameState();
+                }
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 mb-2 shadow-md transition-all duration-200 hover:shadow-lg"
+            >
+              Save Score
+            </Button>
+          )}
+          <Modal
+            isOpen={isSaveScoreOpen}
+            onOpenChange={onSaveScoreOpenChange}
+            isDismissable={false}
+            isKeyboardDismissDisabled={true}
+            className="bg-white rounded-lg shadow-xl"
+          >
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalBody className="p-6">
+                    <SignedOut>
+                      <SignInButton />
+                      <SignUpButton />
+                    </SignedOut>
+                    <SignedIn>
+                      <p className="text-lg font-semibold text-green-600">
+                        Score successfully saved!
+                      </p>
+                    </SignedIn>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button
+                      onClick={onClose}
+                      color="primary"
+                      className="w-full"
+                    >
+                      Close
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+          <Button
+            onPress={() => onHighscoresOpen()}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-6 shadow-md"
+          >
             Highscores
-          </FormButton>
+          </Button>
           <Modal
             isOpen={isHighscoresOpen}
             onOpenChange={onHighscoresOpenChange}
@@ -361,62 +425,6 @@ const MainGame = (props: { album: string }) => {
                   </ModalBody>
                   <ModalFooter>
                     <Button onClick={onClose} color="primary">
-                      Close
-                    </Button>
-                  </ModalFooter>
-                </>
-              )}
-            </ModalContent>
-          </Modal>
-          {!scoreSaved && (
-            <Button
-              onPress={() => {
-                if (isSignedIn && !scoreSaved) {
-                  onSaveScoreOpen();
-                  createScore({
-                    mode: "album",
-                    mbid: releaseMBID,
-                    rgmbid: releaseGroupMBID,
-                    time: `${elapsedMinutes < 10 ? `0${elapsedMinutes}` : elapsedMinutes}:${elapsedSeconds < 10 ? `0${elapsedSeconds}` : elapsedSeconds}`,
-                    score: `${correctGuesses.length} / ${songs.length}`,
-                  });
-                  setScoreSaved(true);
-                } else {
-                  saveGameState();
-                }
-              }}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg"
-            >
-              Save Score
-            </Button>
-          )}
-          <Modal
-            isOpen={isSaveScoreOpen}
-            onOpenChange={onSaveScoreOpenChange}
-            isDismissable={false}
-            isKeyboardDismissDisabled={true}
-            className="bg-white rounded-lg shadow-xl"
-          >
-            <ModalContent>
-              {(onClose) => (
-                <>
-                  <ModalBody className="p-6">
-                    <SignedOut>
-                      <SignInButton />
-                      <SignUpButton />
-                    </SignedOut>
-                    <SignedIn>
-                      <p className="text-lg font-semibold text-green-600">
-                        Score successfully saved!
-                      </p>
-                    </SignedIn>
-                  </ModalBody>
-                  <ModalFooter>
-                    <Button
-                      onClick={onClose}
-                      color="primary"
-                      className="w-full"
-                    >
                       Close
                     </Button>
                   </ModalFooter>
