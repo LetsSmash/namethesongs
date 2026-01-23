@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+ @plugin '../../hero.ts';
+
+  @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 html,
 body,
@@ -10,5 +33,5 @@ body,
 
 button[component='SignInButton'],
 button[component='SignUpButton'] {
-    @apply flex justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 w-full bg-sky-500 hover:bg-sky-600 focus-visible:outline-sky-600 text-white my-5;
+    @apply flex justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 w-full bg-sky-500 hover:bg-sky-600 focus-visible:outline-sky-600 text-white my-5;
 }

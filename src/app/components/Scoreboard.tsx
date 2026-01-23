@@ -315,7 +315,7 @@ const Scoreboard = ({
     <>
       {scores.length > 0 ? (
         <div className="flex flex-col items-center p-4 bg-white shadow-lg rounded-lg border-gray-200 border-small">
-          <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary text-center mx-auto">
+          <h2 className="text-3xl font-bold mb-2 text-gradient bg-clip-text text-transparent bg-linear-to-r from-primary to-secondary text-center mx-auto">
             {title}
             {details.length > 0 && (
               <div className="text-xl text-gray-600 mt-1">
