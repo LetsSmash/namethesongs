@@ -222,3 +222,43 @@ export const parseConfig = (config: string): string[] => {
     return [];
   }
 };
+
+export const getAllReleases = async (artistId: string): Promise<Release[]> => {
+  let allReleases: Release[] = [];
+  let offset = 0;
+  const limit = 100; // MusicBrainz API limit
+  let noMoreData = false;
+
+  do {
+    const { data } = await axios.get<ReleaseRoot>(
+        "api/getReleases/" + artistId,
+        {
+          params: {
+            limit: limit,
+            offset: offset,
+          },
+        }
+    );
+
+    allReleases = [...allReleases, ...data.releases];
+
+    if (data.releases.length < limit) {
+      noMoreData = true;
+    } else {
+      offset += limit;
+      await sleep(600);
+    }
+  } while (!noMoreData);
+  return allReleases;
+}
+
+export const filterUniqueReleaseGroups = (releases: Release[]): ReleaseReleaseGroup[] => {
+  return Array.from(
+      new Map(
+          releases.map((release) => [
+            release["release-group"].id,
+            release["release-group"],
+          ])
+      ).values()
+  );
+}

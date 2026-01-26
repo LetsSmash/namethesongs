@@ -24,7 +24,7 @@ import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import * as Yup from "yup";
-import { filterAndSortReleases, sleep, sortAlbums } from "../utils";
+import {filterAndSortReleases, filterUniqueReleaseGroups, getAllReleases, sleep, sortAlbums} from "../utils";
 import { ReleaseRoot, Release, ReleaseReleaseGroup } from "@/types/release";
 import FormButton from "../components/FormButton";
 
@@ -95,41 +95,9 @@ const FormArtist = () => {
     }
 
     try {
-      let allReleases: Release[] = [];
-      let offset = 0;
-      const limit = 100; // MusicBrainz API limit
-      let noMoreData = false;
-
-      do {
-        const { data } = await axios.get<ReleaseRoot>(
-          "api/getReleases/" + artistId,
-          {
-            params: {
-              limit: limit,
-              offset: offset,
-            },
-          }
-        );
-
-        allReleases = [...allReleases, ...data.releases];
-
-        if (data.releases.length < limit) {
-          noMoreData = true;
-        } else {
-          offset += limit;
-          await sleep(600);
-        }
-      } while (!noMoreData);
-
+      const allReleases = await getAllReleases(artistId)
       // Filter duplicate release-groups
-      const uniqueReleaseGroups = Array.from(
-        new Map(
-          allReleases.map((release) => [
-            release["release-group"].id,
-            release["release-group"],
-          ])
-        ).values()
-      );
+      const uniqueReleaseGroups = filterUniqueReleaseGroups(allReleases)
 
       // Group ReleaseGroups by Releases
       const releaseGroupsWithReleases: Group[] = sortAlbums(
@@ -267,7 +235,13 @@ const FormArtist = () => {
                     <ModalHeader
                       className="flex flex-col gap-1"
                       style={{ marginBottom: "10px", padding: "10px" }}
-                    ></ModalHeader>
+                    >
+                      <CheckboxGroup>
+                        <Checkbox value="Album/EP" isSelected={true}>Album/EP</Checkbox>
+                        <Checkbox value="Live">Live</Checkbox>
+                        <Checkbox value="Compilation">Compilation</Checkbox>
+                      </CheckboxGroup>
+                    </ModalHeader>
                     <ModalBody style={{ padding: "10px" }}>
                       {sortedReleaseGroups.length === 0 && (
                         <p>Loading release groups...</p>
@@ -278,7 +252,7 @@ const FormArtist = () => {
                       >
                         {sortedReleaseGroups.map((releaseGroup, index) => (
                           <div
-                            key={releaseGroup.title}
+                            key={releaseGroup.id}
                             style={{ marginBottom: "20px" }}
                           >
                             <hr />

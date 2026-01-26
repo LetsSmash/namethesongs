@@ -24,7 +24,7 @@ import axios from "axios";
 
 import { Artist, ArtistRoot } from "@/types/artist";
 import { Release, ReleaseReleaseGroup, ReleaseRoot } from "@/types/release";
-import { filterAndSortReleases, sleep, sortAlbums } from "../utils";
+import {filterAndSortReleases, filterUniqueReleaseGroups, getAllReleases, sleep, sortAlbums} from "../utils";
 import FormButton from "../components/FormButton";
 
 const validationSchema = Yup.object({
@@ -98,42 +98,10 @@ const FormAlbum = () => {
     }
     
     try {
-      let allReleases: Release[] = [];
-      let offset = 0;
-      const limit = 100; // MusicBrainz API limit
-      let noMoreData = false;
-
-      do {
-        const { data } = await axios.get<ReleaseRoot>(
-          "api/getReleases/" + artistId,
-          {
-            params: {
-              limit: limit,
-              offset: offset,
-            },
-          }
-        );
-
-        allReleases = [...allReleases, ...data.releases];
-
-        if (data.releases.length < limit) {
-          noMoreData = true;
-        } else {
-          offset += limit;
-          await sleep(600);
-        }
-      } while (!noMoreData);
-      
-      setAllReleases(allReleases);
+      const fetchedReleases = await getAllReleases(artistId)
+      setAllReleases(fetchedReleases);
       // Filter duplicate release-groups
-      const uniqueReleaseGroups = Array.from(
-        new Map(
-          allReleases.map((release) => [
-            release["release-group"].id,
-            release["release-group"],
-          ])
-        ).values()
-      );
+      const uniqueReleaseGroups = filterUniqueReleaseGroups(fetchedReleases)
       setAllReleaseGroups(uniqueReleaseGroups);
     } catch (error) {
       console.error("Error fetching release groups:", error);
