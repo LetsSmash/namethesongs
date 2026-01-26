@@ -1,11 +1,10 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
- @plugin '../../hero.ts';
+@plugin '../../hero.ts';
 
-  @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
-
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -28,10 +27,10 @@
 html,
 body,
 :root {
-    height: 100%;
+  height: 100%;
 }
 
-button[component='SignInButton'],
-button[component='SignUpButton'] {
-    @apply flex justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 w-full bg-sky-500 hover:bg-sky-600 focus-visible:outline-sky-600 text-white my-5;
+button[component="SignInButton"],
+button[component="SignUpButton"] {
+  @apply flex justify-center rounded-md px-3 py-2 text-sm font-semibold focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 w-full bg-sky-500 hover:bg-sky-600 focus-visible:outline-sky-600 text-white my-5;
 }
