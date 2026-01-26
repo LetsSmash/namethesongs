@@ -1,11 +1,12 @@
 import { AudioDBArtist } from "@/types/audioDB";
 import axios from "axios";
+import { NextRequest } from "next/server";
 
 export async function GET(
-    request: Request,
-    { params }: { params: { artist: string } }
+    request: NextRequest,
+    { params }: { params: Promise<{ artist: string }> }
   ) {
-    const artist = params.artist;
+    const { artist } = await params;
 
     try {
         const apiKey = process.env.TADB_PRIVATE_KEY;

@@ -5,9 +5,9 @@ import { type NextRequest } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { artist: string } }
+  { params }: { params: Promise<{ artist: string }> }
 ) {
-  const artist = params.artist;
+  const { artist } = await params;
   const searchParams = request.nextUrl.searchParams;
   const limit = searchParams.get("limit") || 100;
   const offset = searchParams.get("offset") || 0;
