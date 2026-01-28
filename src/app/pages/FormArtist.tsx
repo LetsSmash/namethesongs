@@ -24,7 +24,13 @@ import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import * as Yup from "yup";
-import {filterAndSortReleases, filterUniqueReleaseGroups, getAllReleases, sleep, sortAlbums} from "../utils";
+import {
+  filterAndSortReleases,
+  filterUniqueReleaseGroups,
+  getAllReleases,
+  sleep,
+  sortAlbums,
+} from "../utils";
 import { ReleaseRoot, Release, ReleaseReleaseGroup } from "@/types/release";
 import FormButton from "../components/FormButton";
 
@@ -36,7 +42,7 @@ const FormArtist = () => {
   const [submitted, setSubmitted] = useState(false);
   const [artistId, setArtistId] = useState("");
   const [releaseGroupsReleases, setReleaseGroupsReleases] = useState<Group[]>(
-    []
+    [],
   );
   const [selectedReleases, setSelectedReleases] = useState<Release["id"][]>([]);
   const [selectedReleaseGroups, setSelectedReleaseGroups] = useState<
@@ -81,7 +87,7 @@ const FormArtist = () => {
             "User-Agent": "GuessTheSongs/0.1",
           },
           signal: signal,
-        }
+        },
       );
       return {
         items: data.artists,
@@ -95,16 +101,16 @@ const FormArtist = () => {
     }
 
     try {
-      const allReleases = await getAllReleases(artistId)
+      const allReleases = await getAllReleases(artistId);
       // Filter duplicate release-groups
-      const uniqueReleaseGroups = filterUniqueReleaseGroups(allReleases)
+      const uniqueReleaseGroups = filterUniqueReleaseGroups(allReleases);
 
       // Group ReleaseGroups by Releases
       const releaseGroupsWithReleases: Group[] = sortAlbums(
-        uniqueReleaseGroups
+        uniqueReleaseGroups,
       ).map((rg) => {
         const releasesForGroup = allReleases.filter(
-          (release) => release["release-group"].id === rg.id
+          (release) => release["release-group"].id === rg.id,
         );
         return { ...rg, releases: releasesForGroup };
       });
@@ -112,7 +118,7 @@ const FormArtist = () => {
       setSelectedReleaseGroups(
         releaseGroupsWithReleases.flatMap((rg) => {
           return rg.id;
-        })
+        }),
       );
     } catch (error) {
       console.error("Error fetching release groups:", error);
@@ -233,14 +239,18 @@ const FormArtist = () => {
                 {(onClose: any) => (
                   <>
                     <ModalHeader
-                      className="flex flex-col gap-1"
                       style={{ marginBottom: "10px", padding: "10px" }}
                     >
-                      <CheckboxGroup>
-                        <Checkbox value="Album/EP" isSelected={true}>Album/EP</Checkbox>
-                        <Checkbox value="Live">Live</Checkbox>
-                        <Checkbox value="Compilation">Compilation</Checkbox>
-                      </CheckboxGroup>
+                      {sortedReleaseGroups.length !== 0 && (
+                        <CheckboxGroup orientation="horizontal"
+                        classNames={{
+                          wrapper: "gap-4"
+                        }}>
+                          <Checkbox value="Album/EP">Album/EP</Checkbox>
+                          <Checkbox value="Live">Live</Checkbox>
+                          <Checkbox value="Compilation">Compilation</Checkbox>
+                        </CheckboxGroup>
+                      )}
                     </ModalHeader>
                     <ModalBody style={{ padding: "10px" }}>
                       {sortedReleaseGroups.length === 0 && (
@@ -267,7 +277,7 @@ const FormArtist = () => {
                               {releaseGroup["first-release-date"]
                                 ? releaseGroup["first-release-date"].substring(
                                     0,
-                                    4
+                                    4,
                                   )
                                 : "No Year available"}
                               {")"}
@@ -278,7 +288,7 @@ const FormArtist = () => {
                             </h1>
                             <hr />
                             {selectedReleaseGroups.includes(
-                              releaseGroup.id
+                              releaseGroup.id,
                             ) && (
                               <RadioGroup
                                 value={selectedReleases[index]}
