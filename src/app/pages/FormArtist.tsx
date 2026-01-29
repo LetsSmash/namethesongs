@@ -33,6 +33,7 @@ import {
 } from "../utils";
 import { ReleaseRoot, Release, ReleaseReleaseGroup } from "@/types/release";
 import FormButton from "../components/FormButton";
+import { set } from "lodash";
 
 const validationSchema = Yup.object({
   artist: Yup.string().required("Artist is required"),
@@ -49,6 +50,7 @@ const FormArtist = () => {
     Group["id"][]
   >([]);
   const [sortedReleaseGroups, setSortedReleaseGroups] = useState<Group[]>([]);
+  const [filteredReleaseGroups, setFilteredReleaseGroups] = useState<Group[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([
     "albumep",
     "mixtapestreet",
@@ -152,14 +154,14 @@ const FormArtist = () => {
   }, [releaseGroupsReleases]);
 
   useEffect(() => {
-    const initialSelectedReleases = sortedReleaseGroups.map((releaseGroup) => {
+    const initialSelectedReleases = filteredReleaseGroups.map((releaseGroup) => {
       // If there is only one release, automatically select it
       return releaseGroup.releases.length === 1
         ? releaseGroup.releases[0].id
         : "";
     });
     setSelectedReleases(initialSelectedReleases);
-  }, [sortedReleaseGroups]);
+  }, [filteredReleaseGroups]);
 
   useEffect(() => {
     if (selectedReleases) {
@@ -172,6 +174,39 @@ const FormArtist = () => {
       setReleaseGroupsReleases([]);
     }
   }, [artistId]);
+
+  useEffect(() => {
+    const releaseGroups: Group[] = [];
+
+    if (selectedTypes.includes("albumep")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => (item["primary-type"] === "Album" || item["primary-type"] === "EP") && item["secondary-types"]?.length === 0));
+    }
+    if (selectedTypes.includes("mixtapestreet")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Mixtape/Street")));
+    }
+    if (selectedTypes.includes("soundtrack")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Soundtrack")));
+    }
+    if (selectedTypes.includes("remix")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Remix")));
+    }
+    if (selectedTypes.includes("demo")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Demo")));
+    }
+    if (selectedTypes.includes("live")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Live")));
+    }
+    if (selectedTypes.includes("compilation")) {
+      releaseGroups.push(...sortedReleaseGroups.filter(item => item["secondary-types"]?.includes("Compilation")));
+    }
+    // Just in case an album fits multiple criteria, filter duplicates
+    const unique = Array.from(
+      new Map(
+        releaseGroups.map((item) => [item.id, item])
+      ).values()
+    );
+    setFilteredReleaseGroups(unique);
+  }, [selectedTypes, sortedReleaseGroups]);
 
   const handleRadioChange = (index: number, value: string) => {
     const newSelectedReleases = [...selectedReleases]; // Create a copy of the state array
@@ -248,7 +283,7 @@ const FormArtist = () => {
                     <ModalHeader
                       style={{ marginBottom: "10px", padding: "10px" }}
                     >
-                      {sortedReleaseGroups.length !== 0 && (
+                      { filteredReleaseGroups.length !== 0 && (
                         <CheckboxGroup
                           orientation="horizontal"
                           classNames={{
@@ -268,14 +303,14 @@ const FormArtist = () => {
                       )}
                     </ModalHeader>
                     <ModalBody style={{ padding: "10px" }}>
-                      {sortedReleaseGroups.length === 0 && (
+                      {filteredReleaseGroups.length === 0 && (
                         <p>Loading release groups...</p>
                       )}
                       <CheckboxGroup
                         value={selectedReleaseGroups}
                         onValueChange={handleCheckboxChange}
                       >
-                        {sortedReleaseGroups.map((releaseGroup, index) => (
+                        {filteredReleaseGroups.map((releaseGroup, index) => (
                           <div
                             key={releaseGroup.id}
                             style={{ marginBottom: "20px" }}
@@ -335,7 +370,7 @@ const FormArtist = () => {
                       <Button color="danger" variant="light" onPress={onClose}>
                         Return to Form
                       </Button>
-                      {sortedReleaseGroups.length !== 0 && (
+                      {filteredReleaseGroups.length !== 0 && (
                         <Button
                           color="primary"
                           type="submit"
