@@ -49,6 +49,13 @@ const FormArtist = () => {
     Group["id"][]
   >([]);
   const [sortedReleaseGroups, setSortedReleaseGroups] = useState<Group[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([
+    "albumep",
+    "mixtapestreet",
+    "soundtrack",
+    "remix",
+    "demo",
+  ]);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -235,20 +242,28 @@ const FormArtist = () => {
               isKeyboardDismissDisabled={true}
               size="xl"
             >
-              <ModalContent style={{ maxHeight: "80vh", overflowY: "auto" }}>
+              <ModalContent style={{ maxHeight: "80vh", overflowY: "auto"}}>
                 {(onClose: any) => (
                   <>
                     <ModalHeader
                       style={{ marginBottom: "10px", padding: "10px" }}
                     >
                       {sortedReleaseGroups.length !== 0 && (
-                        <CheckboxGroup orientation="horizontal"
-                        classNames={{
-                          wrapper: "gap-4"
-                        }}>
-                          <Checkbox value="Album/EP">Album/EP</Checkbox>
-                          <Checkbox value="Live">Live</Checkbox>
-                          <Checkbox value="Compilation">Compilation</Checkbox>
+                        <CheckboxGroup
+                          orientation="horizontal"
+                          classNames={{
+                            wrapper: "gap-4",
+                          }}
+                          value={selectedTypes}
+                          onValueChange={setSelectedTypes}
+                        >
+                          <Checkbox value="albumep">Album/EP</Checkbox>
+                          <Checkbox value="mixtapestreet">Mixtape</Checkbox>
+                          <Checkbox value="soundtrack">Soundtrack</Checkbox>
+                          <Checkbox value="remix">Remix</Checkbox>
+                          <Checkbox value="demo">Demo</Checkbox>
+                          <Checkbox value="live">Live</Checkbox>
+                          <Checkbox value="compilation">Compilation</Checkbox>
                         </CheckboxGroup>
                       )}
                     </ModalHeader>
