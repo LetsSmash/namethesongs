@@ -29,10 +29,7 @@ import Countdown from "react-countdown";
 import { notFound, useRouter } from "next/navigation";
 import {
   createArtistScore,
-  createConfiguration,
   getConfigurationById,
-  getConfigurationId,
-  getLastConfigurationId,
 } from "../actions";
 import Scoreboard from "@/app/components/Scoreboard";
 import {
