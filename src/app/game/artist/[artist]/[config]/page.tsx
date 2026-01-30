@@ -4,6 +4,7 @@ import MainGameArtist from "@/app/pages/MainGameArtist";
 
 interface Params {
   artist: string;
+  config: number;
 }
 
 /* export async function generateMetadata({ params }: { params: Params }) {
@@ -20,10 +21,11 @@ interface Params {
   };
 } */
 
-export default function Page({ params }: { params: Params }) {
+export default async function Page({ params }: { params: Promise<Params> }) {
+  const { artist, config } = await params;
   return (
     <FormBackground additionalClasses="gap-4">
-      <MainGameArtist artist={params.artist}/>
+      <MainGameArtist artist={artist} configId={config} />
     </FormBackground>
   );
 }

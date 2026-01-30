@@ -49,7 +49,7 @@ interface ScoreboardProps {
   mode?: "default" | "user";
   types?: "release" | "releasegroup" | "artist";
   configMode?: "this" | "all";
-  currentConfig?: string;
+  configId?: number;
   showPlayButton?: boolean;
 }
 
@@ -58,7 +58,7 @@ const Scoreboard = ({
   mode = "default",
   types = "release",
   configMode = "this",
-  currentConfig,
+  configId,
   showPlayButton = false,
 }: ScoreboardProps) => {
   const [scores, setScores] = useState<ScoreSchema[]>([]);
@@ -188,17 +188,17 @@ const Scoreboard = ({
 
   // Filter scores based on configMode
   useEffect(() => {
-    if (types === "artist" && configMode === "this" && currentConfig) {
+    if (types === "artist" && configMode === "this" && configId) {
       // Filter scores to only show those with the current configuration
       const filtered = allScores.filter(
-        (score) => score.config && score.config.config === currentConfig
+        (score) => score.config && score.config.id === configId
       );
       setScores(filtered);
     } else {
       // Show all scores
       setScores(allScores);
     }
-  }, [allScores, configMode, currentConfig, types]);
+  }, [allScores, configMode, configId, types]);
 
   // Compute track count for releases
   useEffect(() => {

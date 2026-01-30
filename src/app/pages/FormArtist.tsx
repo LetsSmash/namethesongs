@@ -13,7 +13,6 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  Progress,
   Radio,
   RadioGroup,
   useDisclosure,
@@ -31,9 +30,9 @@ import {
   sleep,
   sortAlbums,
 } from "../utils";
-import { ReleaseRoot, Release, ReleaseReleaseGroup } from "@/types/release";
+import { Release } from "@/types/release";
 import FormButton from "../components/FormButton";
-import { set } from "lodash";
+import { getConfigurationId, createConfiguration, getLastConfigurationId } from "../actions";
 
 const validationSchema = Yup.object({
   artist: Yup.string().required("Artist is required"),
@@ -58,6 +57,8 @@ const FormArtist = () => {
     "remix",
     "demo",
   ]);
+  const [loaded, setLoaded] = useState(false);
+  const [configId, setConfigId] = useState<number | null>(null);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -74,9 +75,9 @@ const FormArtist = () => {
 
   useEffect(() => {
     if (submitted) {
-      router.push(`/game/artist/${artistId}`);
+      router.push(`/game/artist/${artistId}/${configId}`);
     }
-  }, [submitted, artistId, router]);
+  }, [submitted, artistId, configId, router]);
 
   let list = useAsyncList<Artist>({
     async load({ signal, filterText }) {
@@ -129,6 +130,7 @@ const FormArtist = () => {
           return rg.id;
         }),
       );
+      setLoaded(true);
     } catch (error) {
       console.error("Error fetching release groups:", error);
     }
@@ -154,20 +156,15 @@ const FormArtist = () => {
   }, [releaseGroupsReleases]);
 
   useEffect(() => {
-    const initialSelectedReleases = filteredReleaseGroups.map((releaseGroup) => {
+    const initialSelectedReleases: Release["id"][] = [];
+    filteredReleaseGroups.forEach((releaseGroup) => {
       // If there is only one release, automatically select it
-      return releaseGroup.releases.length === 1
-        ? releaseGroup.releases[0].id
-        : "";
+      if (releaseGroup.releases.length === 1) {
+        initialSelectedReleases.push(releaseGroup.releases[0].id);
+      }
     });
     setSelectedReleases(initialSelectedReleases);
   }, [filteredReleaseGroups]);
-
-  useEffect(() => {
-    if (selectedReleases) {
-      window.localStorage.setItem("releases", JSON.stringify(selectedReleases));
-    }
-  }, [selectedReleases]);
 
   useEffect(() => {
     if (!artistId) {
@@ -208,20 +205,51 @@ const FormArtist = () => {
     setFilteredReleaseGroups(unique);
   }, [selectedTypes, sortedReleaseGroups]);
 
-  const handleRadioChange = (index: number, value: string) => {
-    const newSelectedReleases = [...selectedReleases]; // Create a copy of the state array
-    newSelectedReleases[index] = value; // Update the selected value for the specific RadioGroup
-    setSelectedReleases(newSelectedReleases); // Update the state with the new array
+  const handleRadioChange = (releaseGroup: Group, releaseId: string) => {
+    setSelectedReleases(prev => {
+      // Remove any existing selection from this release group
+      const filtered = prev.filter(id => 
+        !releaseGroup.releases.some(r => r.id === id)
+      );
+      // Add the new selection
+      return [...filtered, releaseId];
+    });
   };
 
   const handleCheckboxChange = (selectedGroupIds: Group["id"][]) => {
     setSelectedReleaseGroups(selectedGroupIds);
 
-    const newSelectedReleases = selectedReleases.map((releaseId, index) => {
-      const releaseGroupId = releaseGroupsReleases[index].id;
-      return selectedGroupIds.includes(releaseGroupId) ? releaseId : "";
+    setSelectedReleases(prev => {
+      // Only keep releases that belong to still-selected release groups
+      return prev.filter(releaseId => {
+        const releaseGroup = releaseGroupsReleases.find(rg => 
+          rg.releases.some(r => r.id === releaseId)
+        );
+        return releaseGroup && selectedGroupIds.includes(releaseGroup.id);
+      });
     });
-    setSelectedReleases(newSelectedReleases);
+  };
+
+  const handleStartButton = async () => {
+    const configString = JSON.stringify(selectedReleases);
+
+    // Check if configuration already exists
+    const existingConfig = await getConfigurationId(configString);
+    let configId: number;
+
+    if (existingConfig.length > 0) {
+      configId = existingConfig[0].id;
+    } else {
+      // Create new configuration
+      await createConfiguration({
+        mbid: artistId,
+        config: configString,
+      });
+      const newConfig = await getLastConfigurationId();
+      configId = newConfig[0].id;
+    }
+    setConfigId(configId);
+    setSubmitted(true);
   };
 
   return (
@@ -249,6 +277,8 @@ const FormArtist = () => {
               onSelectionChange={(key) => {
                 if (key) {
                   setArtistId(key.toString());
+                  setFilteredReleaseGroups([]);
+                  setLoaded(false);
                 }
               }}
             >
@@ -283,7 +313,7 @@ const FormArtist = () => {
                     <ModalHeader
                       style={{ marginBottom: "10px", padding: "10px" }}
                     >
-                      { filteredReleaseGroups.length !== 0 && (
+                      {loaded && (
                         <CheckboxGroup
                           orientation="horizontal"
                           classNames={{
@@ -303,8 +333,11 @@ const FormArtist = () => {
                       )}
                     </ModalHeader>
                     <ModalBody style={{ padding: "10px" }}>
-                      {filteredReleaseGroups.length === 0 && (
+                      {!loaded && (
                         <p>Loading release groups...</p>
+                      )}
+                      {loaded && filteredReleaseGroups.length === 0 && (
+                        <p className="italic text-gray-600">No albums.</p>
                       )}
                       <CheckboxGroup
                         value={selectedReleaseGroups}
@@ -341,9 +374,9 @@ const FormArtist = () => {
                               releaseGroup.id,
                             ) && (
                               <RadioGroup
-                                value={selectedReleases[index]}
+                                value={releaseGroup.releases.find(r => selectedReleases.includes(r.id))?.id || ""}
                                 onValueChange={(value) =>
-                                  handleRadioChange(index, value)
+                                  handleRadioChange(releaseGroup, value)
                                 }
                                 key={releaseGroup.id}
                                 style={{ padding: "10px 0" }}
@@ -374,7 +407,7 @@ const FormArtist = () => {
                         <Button
                           color="primary"
                           type="submit"
-                          onPress={() => setSubmitted(true)}
+                          onPress={handleStartButton}
                         >
                           Start!
                         </Button>

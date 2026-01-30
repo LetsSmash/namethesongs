@@ -20,11 +20,12 @@ export async function generateMetadata({ params }: { params: Params }) {
   };
 }
 
-export default function Page({ params }: { params: Params }) {
+export default async function Page({ params }: { params: Promise<Params> }) {
+  const { album } = await params;
   return (
     <div className="flex justify-center items-center">
       <FormBackground additionalClasses="w-full max-w-md">
-        <MainGame album={params.album} />
+        <MainGame album={album} />
       </FormBackground>
     </div>
   );

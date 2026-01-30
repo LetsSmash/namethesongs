@@ -30,6 +30,7 @@ import { notFound, useRouter } from "next/navigation";
 import {
   createArtistScore,
   createConfiguration,
+  getConfigurationById,
   getConfigurationId,
   getLastConfigurationId,
 } from "../actions";
@@ -42,7 +43,7 @@ import {
   SignUpButton,
 } from "@clerk/nextjs";
 
-const MainGameArtist = (props: { artist: string }) => {
+const MainGameArtist = (props: { artist: string, configId: number }) => {
   const [releaseIDs, setReleaseIDs] = useState<string[]>([]);
   const [releases, setReleases] = useState<TracklistRoot[]>([]);
   const [currentGuess, setCurrentGuess] = useState("");
@@ -132,24 +133,32 @@ const MainGameArtist = (props: { artist: string }) => {
     const restored = restoreGameState();
 
     if (!restored) {
-      const storedReleases = localStorage.getItem("releases");
-      if (storedReleases && storedReleases !== "[]") {
-        const parsedReleases = JSON.parse(storedReleases);
-        setHasReleases(true);
-        setReleaseIDs(parsedReleases);
-      } else {
-        alert("You need to select some albums first!");
-        notFound();
-      }
+      const getConfig = async () => {
+        try {
+          const configResult = await getConfigurationById(props.configId);
+          if (configResult && configResult[0]?.config) {
+            const parsedReleases = JSON.parse(configResult[0].config);
+            setHasReleases(true);
+            setReleaseIDs(parsedReleases);
+          } else {
+            alert("Invalid configuration ID!");
+            notFound();
+          }
+        } catch (error) {
+          console.error("Error loading configuration:", error);
+          alert("Failed to load configuration!");
+          notFound();
+        }
+      };
+      getConfig();
     }
-  }, [restoreGameState]);
+  }, [restoreGameState, props.configId]);
 
   useEffect(() => {
     const fetchAllReleases = async () => {
       try {
         const fetchedReleases = await Promise.all(
           releaseIDs
-            .filter((id: string) => id !== "")
             .map(async (id: string) => {
               const data = await fetchReleaseInfos(id);
               return data;
@@ -222,30 +231,12 @@ const MainGameArtist = (props: { artist: string }) => {
     const scoreString = `${correctGuesses.length}/${songs.length}`;
 
     try {
-      const configString = JSON.stringify(releaseIDs);
-
-      // Check if configuration already exists
-      const existingConfig = await getConfigurationId(configString);
-      let configId: number;
-
-      if (existingConfig.length > 0) {
-        configId = existingConfig[0].id;
-      } else {
-        // Create new configuration
-        await createConfiguration({
-          mbid: props.artist,
-          config: configString,
-        });
-        const newConfig = await getLastConfigurationId();
-        configId = newConfig[0].id;
-      }
-
       // Save the score
       await createArtistScore({
         time: timeString,
         score: scoreString,
         mbid: props.artist,
-        configId,
+        configId: props.configId,
       });
 
       setScoreSaved(true);
@@ -385,7 +376,7 @@ const MainGameArtist = (props: { artist: string }) => {
                   color="secondary"
                   size="lg"
                   className="font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg w-full"
-                  onClick={onOpen}
+                  onPress={onOpen}
                 >
                   View Scoreboard
                 </Button>
@@ -395,7 +386,7 @@ const MainGameArtist = (props: { artist: string }) => {
                   color="primary"
                   size="lg"
                   className="font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg w-full"
-                  onClick={() => {
+                  onPress={() => {
                     router.push("/");
                   }}
                 >
@@ -452,16 +443,15 @@ const MainGameArtist = (props: { artist: string }) => {
                     mbid={props.artist}
                     types="artist"
                     configMode={selectedConfigMode}
-                    currentConfig={JSON.stringify(releaseIDs)}
+                    configId={props.configId}
                   />
                 ) : (
                   <Scoreboard
                     mbid={props.artist}
                     mode="user"
                     types="artist"
-                    showPlayButton={false}
                     configMode={selectedConfigMode}
-                    currentConfig={JSON.stringify(releaseIDs)}
+                    configId={props.configId}
                   />
                 )}
               </ModalBody>
@@ -491,7 +481,7 @@ const MainGameArtist = (props: { artist: string }) => {
                 </SignedIn>
               </ModalBody>
               <ModalFooter>
-                <Button onClick={onClose} color="primary" className="w-full">
+                <Button onPress={onClose} color="primary" className="w-full">
                   Close
                 </Button>
               </ModalFooter>

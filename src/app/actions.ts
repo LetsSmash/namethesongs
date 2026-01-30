@@ -193,6 +193,14 @@ export async function getLastConfigurationId(): Promise<ConfigSchema[]> {
     .limit(1);
 }
 
+export async function getConfigurationById(id: number): Promise<{ config: string }[]> {
+  return await db
+    .select({ config: artistConfigurations.config })
+    .from(artistConfigurations)
+    .where(eq(artistConfigurations.id, id))
+    .limit(1);
+}
+
 export async function getArtistScoresByMbid(mbid: string) {
   const results = await db
     .select({
