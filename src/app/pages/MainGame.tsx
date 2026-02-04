@@ -12,8 +12,6 @@ import {
   fetchAlbumInfos,
   fetchReleaseInfos,
   normalizeString,
-  saveGameState as saveGameStateUtil,
-  restoreGameState as restoreGameStateUtil,
 } from "../utils";
 import {
   Button,
@@ -96,48 +94,6 @@ const MainGame = (props: { album: string }) => {
 
   const { reward } = useReward("rewardId", "confetti");
 
-  // This is done to keep the game state, even when the user refreshes the page (or in this case, authenticates via google)
-  const saveGameState = () => {
-    const gameState: GameState = {
-      releaseMBID,
-      albumName,
-      artistName,
-      songs,
-      correctGuesses,
-      remainingMinutes,
-      remainingSeconds,
-      elapsedMinutes,
-      elapsedSeconds,
-      hasEnded,
-      stopped,
-    };
-
-    saveGameStateUtil("gameState", gameState);
-  };
-
-  const restoreGameState = useCallback(() => {
-    const gameState = restoreGameStateUtil<GameState>("gameState");
-
-    if (gameState) {
-      setReleaseMBID(gameState.releaseMBID);
-      setAlbumName(gameState.albumName);
-      setArtistName(gameState.artistName);
-      setSongs(gameState.songs);
-      setCorrectGuesses(gameState.correctGuesses);
-      setRemainingMinutes(gameState.remainingMinutes);
-      setRemainingSeconds(gameState.remainingSeconds);
-      setElapsedMinutes(gameState.elapsedMinutes);
-      setElapsedSeconds(gameState.elapsedSeconds);
-      setHasEnded(gameState.hasEnded);
-      setStopped(gameState.stopped);
-      setLoaded(true);
-      setRestoringState(true);
-      return true;
-    }
-
-    return false;
-  }, []);
-
   const fetchTracklist = useCallback(async () => {
     const data = await fetchReleaseInfos(releaseMBID);
     setLoaded(true);
@@ -191,12 +147,10 @@ const MainGame = (props: { album: string }) => {
   };
 
   useEffect(() => {
-    const restored = restoreGameState();
-
-    if (!restored && props.album) {
+    if (props.album) {
       setReleaseMBID(props.album);
     }
-  }, [props.album, restoreGameState]);
+  }, [props.album]);
 
   useEffect(() => {
     if (releaseMBID && !restoringState) {
@@ -327,8 +281,6 @@ const MainGame = (props: { album: string }) => {
                     score: `${correctGuesses.length} / ${songs.length}`,
                   });
                   setScoreSaved(true);
-                } else {
-                  saveGameState();
                 }
               }}
               className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 mb-2 shadow-md transition-all duration-200 hover:shadow-lg"

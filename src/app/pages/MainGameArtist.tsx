@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchReleaseInfos,
   normalizeString,
-  saveGameState as saveGameStateUtil,
-  restoreGameState as restoreGameStateUtil,
 } from "../utils";
 import { Track, TracklistRoot } from "@/types/tracklist";
 import {
@@ -70,42 +68,6 @@ const MainGameArtist = (props: { artist: string, configId: number }) => {
   const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  interface ArtistGameState {
-    artistMBID: string;
-    releaseIDs: string[];
-    correctGuesses: string[];
-    hasEnded: boolean;
-    scoreSaved: boolean;
-  }
-
-  const saveGameState = () => {
-    const gameState: ArtistGameState = {
-      artistMBID: props.artist,
-      releaseIDs,
-      correctGuesses,
-      hasEnded,
-      scoreSaved,
-    };
-
-    saveGameStateUtil("artistGameState", gameState);
-  };
-
-  const restoreGameState = useCallback(() => {
-    const gameState = restoreGameStateUtil<ArtistGameState>("artistGameState");
-
-    if (gameState && gameState.artistMBID === props.artist) {
-      setReleaseIDs(gameState.releaseIDs);
-      setCorrectGuesses(gameState.correctGuesses);
-      setHasEnded(gameState.hasEnded);
-      setScoreSaved(gameState.scoreSaved);
-      setHasReleases(true);
-      setRestoringState(true);
-      return true;
-    }
-
-    return false;
-  }, [props.artist]);
-
   useEffect(() => {
     const fetchLogo = async () => {
       try {
@@ -127,9 +89,6 @@ const MainGameArtist = (props: { artist: string, configId: number }) => {
   }, [props.artist]);
 
   useEffect(() => {
-    const restored = restoreGameState();
-
-    if (!restored) {
       const getConfig = async () => {
         try {
           const configResult = await getConfigurationById(props.configId);
@@ -148,8 +107,7 @@ const MainGameArtist = (props: { artist: string, configId: number }) => {
         }
       };
       getConfig();
-    }
-  }, [restoreGameState, props.configId]);
+  }, [props.configId]);
 
   useEffect(() => {
     const fetchAllReleases = async () => {
@@ -359,8 +317,6 @@ const MainGameArtist = (props: { artist: string, configId: number }) => {
                       if (isSignedIn && !scoreSaved) {
                         onSaveScoreOpen();
                         await saveScore();
-                      } else if (!isSignedIn) {
-                        saveGameState();
                       }
                     }}
                     className="bg-green-500 hover:bg-green-600 text-white font-semibold py-6 shadow-md transition-all duration-200 hover:shadow-lg"
