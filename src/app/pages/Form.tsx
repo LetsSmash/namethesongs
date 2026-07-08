@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Dropdown,
   DropdownTrigger,
@@ -68,6 +69,14 @@ const Form = () => {
             </UserButton>
           </div>
         </SignedIn>
+        <div className="flex justify-center pb-3">
+          <Link
+            href="/highscores"
+            className="text-primary font-medium hover:underline"
+          >
+            View Highscores
+          </Link>
+        </div>
         <>
           <Tabs className="grid mb-3">
             <Tab key="album" title="Album">
