@@ -51,6 +51,17 @@ const Form = () => {
                     </SignUpButton>
                   </div>
                 </DropdownItem>
+                <DropdownItem key="highscores">
+                    <div className="flex items-center gap-4">
+                      <Icon icon="fa7-solid:trophy" width="20" height="20"/>
+                      <Link
+                          href="/highscores"
+                          className="font-medium hover:underline"
+                      >
+                        Highscores
+                      </Link>
+                    </div>
+                </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </div>
@@ -64,19 +75,12 @@ const Form = () => {
                   label="Your Profile"
                   labelIcon={<Icon icon="fa7-solid:user-circle" width="20" height="20" />}
                 />
+                <UserButton.Link href="/highscores" label="Highscores" labelIcon={<Icon icon="fa7-solid:trophy" width="20" height="20" />} />
                 <UserButton.Action label="manageAccount" />
               </UserButton.MenuItems>
             </UserButton>
           </div>
         </SignedIn>
-        <div className="flex justify-center pb-3">
-          <Link
-            href="/highscores"
-            className="text-primary font-medium hover:underline"
-          >
-            View Highscores
-          </Link>
-        </div>
         <>
           <Tabs className="grid mb-3">
             <Tab key="album" title="Album">
